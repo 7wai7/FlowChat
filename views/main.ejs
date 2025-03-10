@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script>
+        (function() {
+            if (/Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent)) {
+                document.documentElement.classList.add("mobile-device");
+            }
+        })();
+    </script>
+
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>FlowChat</title>
+
+    <link rel="stylesheet" href="/css/global.css">
+</head>
+
+<body>
+    <%- include('./index') %>
+    <script src="/js/global.js"></script>
+</body>
+
+</html>
