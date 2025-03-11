@@ -1,0 +1,28 @@
+<main>
+    <div class="form-container">
+        <h2 id="form-title">Sign In</h2>
+        <form id="auth-form">
+            <div class="form-group" id="login-group" style="display: none;">
+                <input type="text" id="login" placeholder="Login">
+                <div class="error-message"></div>
+            </div>
+            <div class="form-group">
+                <input type="email" id="email" placeholder="Email">
+                <div class="error-message"></div>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="Password">
+                <div class="error-message"></div>
+            </div>
+            <div class="form-group" id="confirm-password-group" style="display: none;">
+                <input type="password" id="confirm-password" placeholder="Confirm Password">
+                <div class="error-message"></div>
+            </div>
+            <button type="submit" class="submit-btn">Sign In</button>
+        </form>
+        <p>
+            <span id="toggle-text">Don't have an account?</span>
+            <span class="toggle-link" id="toggle-form">Sign Up</span>
+        </p>
+    </div>
+</main>

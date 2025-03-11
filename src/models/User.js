@@ -11,9 +11,8 @@ const userSchema = new mongoose.Schema({
             message: "Email is not valid"
         }
     },
-    password: { type: String, required: true, minlength: 4, maxlength: 12 },
-    role: { type: String, enum: ["user", "moderator", "admin"], default: "user" },
-    about: { type: String, maxlength: 2000 }
+    password: { type: String, required: true, minlength: 4, maxlength: 16 },
+    role: { type: String, enum: ["user", "moderator", "admin"], default: "user" }
 }, {
     timestamps: true
 });

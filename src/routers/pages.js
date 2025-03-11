@@ -14,10 +14,32 @@ const router = new Router();
 
 router.get('/', auth, (req, res) => {
     try {
-        res.render('main');
+        if(!req.user) return res.redirect('/auth');
+        
+        res.render('main', {
+            body: './index',
+            stylesheets: ['index'],
+            scripts: ['index'],
+            user: req.user
+        });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error", err });
+        res.status(500).json(err);
+    }
+})
+
+router.get('/auth', auth, (req, res) => {
+    try {
+        if(req.user) return res.redirect('/');
+        
+        res.render('main', {
+            body: './auth',
+            stylesheets: ['auth'],
+            scripts: ['auth'],
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(err);
     }
 })
 

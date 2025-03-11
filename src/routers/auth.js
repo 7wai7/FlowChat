@@ -9,16 +9,19 @@ router.post('/signup', async (req, res, next) => {
     try {
         const { login, email, password, confirmPassword } = req.body;
 
-        if (!login) return res.status(400).json({ message: 'Login are required', error: 'login'});
-        if (!email) return res.status(400).json({ message: 'Email are required', error: 'email'});
-        if(!isEnableEmail(email)) return res.status(400).json({ message: 'The email address is not valid', error: 'email'});
-        if (!password) return res.status(400).json({ message: 'Password are required', error: 'password'});
+        if (!login) return res.status(400).json({ error: 'Login are required', field: 'login'});
+        if (!email) return res.status(400).json({ error: 'Email are required', field: 'email'});
+        if(!isEnableEmail(email)) return res.status(400).json({ error: 'The email address is not valid', field: 'email'});
+        if (!password) return res.status(400).json({ error: 'Password are required', field: 'password'});
+
+        const existedLogin = await User.findOne({ login });
+        if (existedLogin) return res.status(400).json({ error: 'This login already exist', field: 'login'});
 
         const existedUser = await User.findOne({ email });
-        if (existedUser) return res.status(400).json({ message: 'This email already exist', error: 'email'});
+        if (existedUser) return res.status(400).json({ error: 'This email already exist', field: 'email'});
 
         if (password != confirmPassword) {
-            return res.status(400).json({ message: 'Password confirmation is not equal to the password', error: 'password confirmation' })
+            return res.status(400).json({ error: 'Password confirmation is not equal to the password', field: 'confirm-password' })
         }
 
         const user = await User.create({ email, password, login });
@@ -27,6 +30,7 @@ router.post('/signup', async (req, res, next) => {
         res.cookie('token', token, { httpOnly: true, /* secure: true, */ sameSite: 'Lax', path: '/', }); // httpOnly захищає від доступу через JS
         res.status(200).json("Successful signup.");
     } catch (err) {
+        console.error(err);
         next(err);
     }
 });
@@ -35,22 +39,22 @@ router.post('/login', async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
-        if (!email) return res.status(400).json({ message: 'Email are required', error: 'email'});
-        if(!isEnableEmail(email)) return res.status(400).json({ message: 'The email address is not valid', error: 'email'});
-        if (!password) return res.status(400).json({ message: 'Password are required', error: 'password'});
-
+        if (!email) return res.status(400).json({ error: 'Email are required', field: 'email'});
+        if(!isEnableEmail(email)) return res.status(400).json({ error: 'The email address is not valid', field: 'email'});
+        if (!password) return res.status(400).json({ error: 'Password are required', field: 'password'});
 
         const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ message: 'Invalid email', error: 'email'});
+        if (!user) return res.status(400).json({ error: 'Invalid email', field: 'email'});
 
         const isMatch = await user.comparePassword(password);
-        if (!isMatch) return res.status(400).json({ message: 'Invalid password', error: 'password'});
+        if (!isMatch) return res.status(400).json({ error: 'Invalid password', field: 'password'});
 
         const token = jwt.sign({ id: user._id }, process.env.TOKEN_KEY);
 
         res.cookie('token', token, { httpOnly: true, /* secure: true, */ sameSite: 'Lax', path: '/', }); // httpOnly захищає від доступу через JS
-        res.status(200).json({ message: "Successful login." });
+        res.status(200).json("Successful login.");
     } catch (err) {
+        console.error(err);
         next(err);
     }
 });
@@ -58,7 +62,7 @@ router.post('/login', async (req, res, next) => {
 router.post('/logout', (req, res, next) => {
     try {
         res.clearCookie('token');
-        res.redirect('/');
+        res.end();
     } catch (err) {
         next(err);
     }

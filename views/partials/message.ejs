@@ -1,0 +1,27 @@
+<% messages.forEach(message => { %>
+    <% const isOwnMessage = Math.random() > .5 ? true : false %>
+
+    <div class="message" data-user="" <%= isOwnMessage ? 'isOwnMessage' : '' %>>
+        <img src="/api/avatar/" width="40px" class="avatar">
+        <div class="message-content">
+            <div class="user-login">Login</div>
+            <div class="message-text"><% for (let i = 0; i < 50; i++) { %>text <% } %></div>
+            <div class="message-bottom">
+                <span class="date">00:00</span>
+                <% if(isOwnMessage) { %>
+                    <div class="check mark">
+                        <svg fill="#fff" width="24px" height="24px" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M760 380.4l-61.6-61.6-263.2 263.1-109.6-109.5L264 534l171.2 171.2L760 380.4z" />
+                        </svg>
+                        <svg fill="#fff" width="24px" height="24px" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                            d="m 934.208,380.4 -61.6,-61.6 -263.2,263.1 -109.6,-109.5 -61.6,61.6 171.2,171.2 z"/>
+                            <path
+                            d="M 760,380.4 698.4,318.8 435.2,581.9 325.6,472.4 264,534 435.2,705.2 Z"/>
+                        </svg>            
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+<% }); %>

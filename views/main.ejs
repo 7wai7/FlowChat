@@ -14,12 +14,22 @@
     <meta content="width=device-width, initial-scale=1" name="viewport" />
     <title>FlowChat</title>
 
+    <!-- <link rel="stylesheet" href="/css/reset.css"> -->
     <link rel="stylesheet" href="/css/global.css">
+    
+    <% stylesheets.forEach(function(style) { %>
+        <link rel="stylesheet" href="/css/<%= style %>.css">
+    <% }) %>
 </head>
 
 <body>
-    <%- include('./index') %>
+    <%- include(body) %>
+
     <script src="/js/global.js"></script>
+
+    <% scripts.forEach(function(script) { %>
+        <script src="/js/<%= script %>.js"></script>
+    <% }) %>
 </body>
 
 </html>

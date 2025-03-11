@@ -1,0 +1,82 @@
+html, body {
+    margin: 0;
+    width: 100vw;
+    height: 100%;
+}
+
+body {
+    background: #000000;
+    display: inline-flex;
+    padding: 0 16%;
+    box-sizing: border-box;
+}
+
+h2,
+h3,
+h4 {
+    margin: 0;
+}
+
+button {
+    border: none;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+}
+
+.textarea-autosize {
+    outline: none;
+    display: block;
+    overflow: hidden;
+    resize: none;
+}
+
+.avatar {
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.dropdown {
+    width: max-content;
+    position: relative;
+}
+
+.dropdown .content {
+    position: absolute;
+    z-index: 1000;
+    background-color: #ffffff;
+    display: flex;
+    flex-flow: column;
+    gap: 10px;
+    padding: 10px 0;
+    border-radius: 10px;
+}
+
+.dropdown .content a,
+.dropdown .content button {
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 0 10px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 30px;
+}
+
+.dropdown .content a:hover,
+.dropdown .content button:hover {
+    background-color: #dddddd;
+}
+
+.dropdown .v-line {
+    background: lightgray;
+    width: 100%;
+    height: 1px;
+}
+
+[hidden]:where(:not([hidden='until-found'])) {
+    display: none !important;
+}
+
+  
