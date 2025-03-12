@@ -70,19 +70,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 if(res.ok) window.location.href = '/';
-                
-                const data = await res.json();
-
-                if(data.error && data.field) {
-                    const errorField = document.getElementById(data.field);
-                    if(errorField) {
-                        errorField.nextElementSibling.textContent = data.error;
-                        errorField.classList.add('error');
-                    } else {
-                        console.error('Error field not found:', data.field);
+                else {
+                    const data = await res.json();
+    
+                    if(data.error && data.field) {
+                        const errorField = document.getElementById(data.field);
+                        if(errorField) {
+                            errorField.nextElementSibling.textContent = data.error;
+                            errorField.classList.add('error');
+                        } else {
+                            console.error('Error field not found:', data.field);
+                        }
                     }
+    
+                    if(data.message) console.error(data.message);
                 }
-
             }
         });
     } catch (err) {

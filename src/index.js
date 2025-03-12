@@ -1,5 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
+import http from "http";
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { fileURLToPath } from 'url';
@@ -10,6 +11,7 @@ import functions from './functions.js';
 import apiRouter from './routers/api.js';
 import pageRoutes from './routers/pages.js';
 import authRoutes from './routers/auth.js';
+import { initSocket } from "./socket.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -19,6 +21,8 @@ const PORT = process.env.PORT || 3000;
 const DB_URL = "mongodb://localhost:27017/flowchat";
 
 const app = express();
+const server = http.createServer(app);
+initSocket(server);
 
 
 
@@ -51,9 +55,9 @@ app.use((err, req, res, next) => {
 async function startApp() {
     try {
         await mongoose.connect(DB_URL);
-        app.listen(PORT, () => console.log(`Сервер працює на порті: http://localhost:${PORT}`));
+        server.listen(PORT, () => console.log(`Сервер працює на порті: http://localhost:${PORT}`));
     } catch (error) {
-        console.log(error);
+        console.error(error);
     }
 }
 

@@ -1,9 +1,9 @@
 <% chats.forEach(chat => { %>
-    <button class="select-chat">
-        <img src="api/avatar" width="40px" class="avatar">
+    <button class="chat" data-id="<%= chat._id %>" data-title="<%= chat.login %>">
+        <img src="api/avatar/<%= chat._id %>" width="40px" class="avatar">
         <div class="metadata">
             <div class="top">
-                <h3 class="title">title</h3>
+                <h3 class="title"><%= chat.login %></h3>
                 <span class="date">00:00</span>
             </div>
             <div class="bottom">

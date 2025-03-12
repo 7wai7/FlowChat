@@ -1,13 +1,15 @@
 <% messages.forEach(message => { %>
-    <% const isOwnMessage = Math.random() > .5 ? true : false %>
+    <% const isOwnMessage = user._id.toString() === message.sender._id.toString() %>
 
-    <div class="message" data-user="" <%= isOwnMessage ? 'isOwnMessage' : '' %>>
-        <img src="/api/avatar/" width="40px" class="avatar">
+    <div class="message" data-sender_id="<%= message.sender._id %>" <%= isOwnMessage ? 'isOwnMessage' : '' %>>
+        <img src="/api/avatar/<%= message.sender._id %>" width="40px" height="40px" class="avatar">
         <div class="message-content">
-            <div class="user-login">Login</div>
-            <div class="message-text"><% for (let i = 0; i < 50; i++) { %>text <% } %></div>
+            <% if(!isOwnMessage) { %>
+                <div class="user-login"><%= message.sender.login %></div>
+            <% } %>
+            <div class="message-text"><%= message.text %></div>
             <div class="message-bottom">
-                <span class="date">00:00</span>
+                <span class="date"><%= timeAgo(message.createdAt) %></span>
                 <% if(isOwnMessage) { %>
                     <div class="check mark">
                         <svg fill="#fff" width="24px" height="24px" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
