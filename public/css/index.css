@@ -216,6 +216,8 @@ main {
     padding: 6px;
     width: 30px;
     height: 30px;
+    opacity: 0;
+    visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
@@ -267,6 +269,28 @@ main {
 
 
 
+.attach-file-panel {
+    display: flex;
+    justify-content: center;
+    position: relative;
+    background: #030029;
+}
+
+.uploaded-data {
+    padding: 10px 20%;
+}
+
+#uploaded-file-img {
+    width: 100%;
+    max-height: 200px;
+}
+
+#close-panel-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
 .input-wrapper {
     background: #0a0039;
     display: inline-flex;
@@ -295,4 +319,8 @@ main {
 
 .mobile-device body {
     padding: 0 6px;
+}
+
+.mobile-device .uploaded-data-panel {
+    width: 100%;
 }

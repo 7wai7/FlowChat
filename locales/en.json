@@ -1,0 +1,24 @@
+{
+    "signin": "Sign in",
+    "signup": "Sign up",
+    "login": "Login",
+    "invalidLogin": "invalidLogin",
+    "email": "Email",
+    "invalidEmailFormat": "Invalid email format",
+    "password": "Password",
+    "password4symbols": "Password must be at least 4 characters",
+    "confirmPassword": "Confirm password",
+    "matchPasswords": "Passwords do not match",
+    "doNotHaveAcc": "Don't have an account?",
+    "alreadyHaveAcc": "Already have an account?",
+
+    "search": "Search",
+    "chooseChat": "Choose a chat",
+    "createGroup": "Create group",
+    "notes": "Notes",
+    "settings": "Settings",
+    "language": "Language",
+    "logout": "Log out",
+    "leaveGroup": "Leave the group",
+    "delete": "Delete"
+}

@@ -13,12 +13,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         toggleForm.addEventListener('click', () => {
             isSignUp = !isSignUp;
-            formTitle.textContent = isSignUp ? 'Sign Up' : 'Sign In';
-            toggleText.textContent = isSignUp ? 'Already have an account?' : "Don't have an account?";
-            toggleForm.textContent = isSignUp ? 'Sign In' : 'Sign Up';
+            formTitle.textContent = isSignUp ? formTitle.dataset.signup : formTitle.dataset.signin;
+            toggleText.textContent = isSignUp ? toggleText.dataset.signup : toggleText.dataset.signin;
+            toggleForm.textContent = isSignUp ? toggleForm.dataset.signin : toggleForm.dataset.signup;
             loginGroup.style.display = isSignUp ? 'block' : 'none';
             confirmPasswordGroup.style.display = isSignUp ? 'block' : 'none';
-            submitBtn.textContent = isSignUp ? 'Sign Up' : 'Sign In';
+            submitBtn.textContent = isSignUp ? submitBtn.dataset.signup : submitBtn.dataset.signin;
         });
 
         form.addEventListener('submit', async (e) => {
@@ -34,25 +34,29 @@ document.addEventListener("DOMContentLoaded", () => {
             document.querySelectorAll('.form-group input').forEach(el => el.classList.remove('error'));
 
             if(isSignUp && !login.value.trim()) {
-                login.nextElementSibling.textContent = 'Invalid login';
+                const errorDiv = login.nextElementSibling;
+                errorDiv.textContent = errorDiv.dataset.invalid_login_error;
                 login.classList.add('error');
                 isValid = false; 
             }
 
             if (!emailRegex.test(email.value)) {
-                email.nextElementSibling.textContent = 'Invalid email format';
+                const errorDiv = email.nextElementSibling;
+                errorDiv.textContent = errorDiv.dataset.invalid_email_format_error;
                 email.classList.add('error');
                 isValid = false;
             }
 
             if (password.value.length < 4) {
-                password.nextElementSibling.textContent = 'Password must be at least 4 characters';
+                const errorDiv = password.nextElementSibling;
+                errorDiv.textContent = errorDiv.dataset.password_4_symbols_error;
                 password.classList.add('error');
                 isValid = false;
             }
 
             if (isSignUp && password.value !== confirmPassword.value) {
-                confirmPassword.nextElementSibling.textContent = 'Passwords do not match';
+                const errorDiv = confirmPassword.nextElementSibling;
+                errorDiv.textContent = errorDiv.dataset.match_passwords_error;
                 confirmPassword.classList.add('error');
                 isValid = false;
             }

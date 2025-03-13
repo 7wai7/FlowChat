@@ -1,28 +1,28 @@
 <main>
     <div class="form-container">
-        <h2 id="form-title">Sign In</h2>
+        <h2 id="form-title" data-signin="<%= t("signin") %>" data-signup="<%= t("signup") %>"><%= t("signin") %></h2>
         <form id="auth-form">
             <div class="form-group" id="login-group" style="display: none;">
-                <input type="text" id="login" placeholder="Login">
-                <div class="error-message"></div>
+                <input type="text" id="login" placeholder="<%= t("login") %>">
+                <div class="error-message" data-invalid_login_error="<%= t("invalidLogin") %>"></div>
             </div>
             <div class="form-group">
-                <input type="email" id="email" placeholder="Email">
-                <div class="error-message"></div>
+                <input type="email" id="email" placeholder="<%= t("email") %>">
+                <div class="error-message" data-invalid_email_format_error="<%= t("invalidEmailFormat") %>"></div>
             </div>
             <div class="form-group">
-                <input type="password" id="password" placeholder="Password">
-                <div class="error-message"></div>
+                <input type="password" id="password" placeholder="<%= t("password") %>">
+                <div class="error-message" data-password_4_symbols_error="<%= t("password4symbols") %>"></div>
             </div>
             <div class="form-group" id="confirm-password-group" style="display: none;">
-                <input type="password" id="confirm-password" placeholder="Confirm Password">
-                <div class="error-message"></div>
+                <input type="password" id="confirm-password" placeholder="<%= t("confirmPassword") %>">
+                <div class="error-message" data-match_passwords_error="<%= t("matchPasswords") %>"></div>
             </div>
-            <button type="submit" class="submit-btn">Sign In</button>
+            <button type="submit" class="submit-btn" data-signin="<%= t("signin") %>" data-signup="<%= t("signup") %>"><%= t("signin") %></button>
         </form>
         <p>
-            <span id="toggle-text">Don't have an account?</span>
-            <span class="toggle-link" id="toggle-form">Sign Up</span>
+            <span id="toggle-text" data-signin="<%= t("doNotHaveAcc") %>" data-signup="<%= t("alreadyHaveAcc") %>"><%= t("doNotHaveAcc") %></span>
+            <span class="toggle-link" id="toggle-form" data-signin="<%= t("signin") %>" data-signup="<%= t("signup") %>"><%= t("signup") %></span>
         </p>
     </div>
 </main>

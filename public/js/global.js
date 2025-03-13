@@ -75,7 +75,9 @@ document.addEventListener("DOMContentLoaded", () => {
             // Якщо клікнули по кнопці — перемикаємо видимість
             if (event.target.closest("button") === button) {
                 // Закриваємо всі інші dropdown
-                document.querySelectorAll(".dropdown .content").forEach(c => c.setAttribute("hidden", ""));
+                document.querySelectorAll(".dropdown .content").forEach(dropdown => {
+                    if(!dropdown.closest('.dropdown')) dropdown.setAttribute("hidden", "")
+                });
         
                 content.removeAttribute("hidden");
                 calculateDropdownRect(button, content);

@@ -33,7 +33,7 @@ function resize() {
     }
 }
 
-async function loadEntities() {
+async function loadChats() {
     try {
         const container = document.getElementById('chats-container');
     
@@ -218,17 +218,86 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     try {
-        window.addEventListener('resize', resize);
-        resize();
+        document.getElementById('content-container').addEventListener('click', async event => {
+            const deleteMessageBtn = event.target.closest('.delete-message-btn');
+            if(deleteMessageBtn) {
+                const message = deleteMessageBtn.closest('.message');
+                const id = message.dataset.id;
+
+                const res = await fetch(`/api/message/${id}`, { method: "DELETE" });
+                if(res.ok) {
+                    message.remove();
+                } else {
+                    const data = await res.json();
+                    console.error(data.message);
+                }
+            }
+        });
     } catch (err) {
         console.error(err);
     }
 
 
     try {
+        window.addEventListener('resize', resize);
+    } catch (err) {
+        console.error(err);
+    }
+
+
+    try {
+        const fileInput = document.getElementById('input-file');
+        const attachFilePanel = document.getElementById('attach-file-panel');
+        const closePanelBtn = document.getElementById('close-panel-btn');
+        const uploadedFileImg = document.getElementById('uploaded-file-img');
+        const uploadedFileVideo = document.getElementById('uploaded-file-video');
+
         document.getElementById('attach-file-btn').addEventListener('click', event => {
-            document.getElementById('input-file').click()
+            fileInput.click();
         });
+
+        fileInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (!file) return
+
+            const fileURL = URL.createObjectURL(file);
+            
+            if (file.type.startsWith("image/")) {
+                uploadedFileImg.src = fileURL;
+            } else if (file.type.startsWith("video/")) {
+                uploadedFileVideo.src = fileURL;
+                uploadedFileVideo.crossOrigin = "anonymous";
+
+                uploadedFileVideo.addEventListener("loadedmetadata", function () {
+                    uploadedFileVideo.currentTime = 1; // Перемотуємо на 1 секунду
+                }, { once: true });
+
+                uploadedFileVideo.addEventListener("seeked", function generatePreview() {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = uploadedFileVideo.videoWidth;
+                    canvas.height = uploadedFileVideo.videoHeight;
+                    const ctx = canvas.getContext("2d");
+
+                    ctx.drawImage(uploadedFileVideo, 0, 0, canvas.width, canvas.height);
+                    uploadedFileImg.src = canvas.toDataURL("image/png");
+
+                    canvas.toBlob(blob => {
+                        uploadedFileImg.file = new File([blob], "preview.png", { type: "image/png" });
+                    }, "image/png");
+
+                    uploadedFileVideo.removeEventListener("seeked", generatePreview); // Видаляємо обробник після виконання
+                }, { once: true });
+            }
+
+            attachFilePanel.removeAttribute('hidden');
+        });
+
+        closePanelBtn.addEventListener('click', event => {
+            attachFilePanel.setAttribute('hidden', '');
+            uploadedFileImg.src = '';
+            uploadedFileImg.file = '';
+            uploadedFileVideo.src = '';
+        })
     } catch (err) {
         console.error(err);
     }
@@ -297,7 +366,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById('search-input').addEventListener('input', event => {
             if(!document.getElementById('search-input').value.trim()) {
                 document.getElementById('chats-container').innerHTML = '';
-                loadEntities();
+                loadChats();
             } else sendSearchQuery();
         })
     } catch (err) {
@@ -306,6 +375,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     try {
+        document.getElementById('lang-dropdown-content').addEventListener('click', event => {
+            if(event.target.matches('button')) {
+                const btn = event.target;
+                document.cookie = `lang=${btn.dataset.lang}`; 
+                btn.closest('.content').setAttribute('hidden', '');
+            }
+        })
+
         document.getElementById('logout-btn').addEventListener('click', async event => {
             const res = await fetch('/api/auth/logout', { method: "POST" })
             if(res.ok) window.location.href = '/auth';
@@ -365,6 +442,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     
-    loadEntities();
+    loadChats();
+    resize();
 
 });

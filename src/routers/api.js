@@ -9,6 +9,7 @@ import auth from '../middlewares/auth.js';
 import { User } from '../models/User.js';
 import { createConnection, createMessage, deleteMessage, findMessages, generateAvatar } from '../service.js';
 import ChatConnection from '../models/ChatConnection.js';
+import { translate } from '../localization.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -30,6 +31,7 @@ const router = new Router();
 router.get('/messages', auth, async (req, res, next) => {
     try {
         if (!req.user) return res.status(401).json({ message: "Not registered"});
+        const lang = req.cookies.lang || "en";
 
         const chatId = req.query.chatId;
         const offset = parseInt(req.query.offset) || 0;
@@ -40,7 +42,8 @@ router.get('/messages', auth, async (req, res, next) => {
 
         res.render('partials/message', {
             user: req.user,
-            messages
+            messages,
+            t: (key) => translate(lang, key)
         });
     } catch (err) {
         console.error(err);
@@ -51,6 +54,7 @@ router.get('/messages', auth, async (req, res, next) => {
 router.get('/chats', auth, async (req, res, next) => {
     try {
         if (!req.user) return res.status(401).json({ message: "Not registered"});
+        const lang = req.cookies.lang || "en";
 
         const connections = await ChatConnection.aggregate([
             {
@@ -86,7 +90,8 @@ router.get('/chats', auth, async (req, res, next) => {
         ]);
         
         res.render('partials/chat', {
-            chats: connections
+            chats: connections,
+            t: (key) => translate(lang, key)
         });
     } catch (err) {
         console.error(err);
@@ -97,6 +102,7 @@ router.get('/chats', auth, async (req, res, next) => {
 router.get('/find', auth, async (req, res, next) => {
     try {
         if (!req.user) return res.status(401).json({ message: "Not registered"});
+        const lang = req.cookies.lang || "en";
 
         const chat = req.query.chat;
 
@@ -108,7 +114,8 @@ router.get('/find', auth, async (req, res, next) => {
 
         
         res.render('partials/chat', {
-            chats: searchChat
+            chats: searchChat,
+            t: (key) => translate(lang, key)
         });
     } catch (err) {
         console.error(err);

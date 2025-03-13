@@ -10,6 +10,7 @@ import functions from './functions.js';
 import { User } from "./models/User.js";
 import Message from "./models/Message.js";
 import { createMessage, findMessages } from "./service.js";
+import { translate } from './localization.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -47,71 +48,79 @@ export function initSocket(server) {
     io.on("connection", async (socket) => {
         console.log("Користувач підключився:", socket.id);
 
-        socket.emit('connected', {})
+        socket.emit('connected', {});
 
-        socket.on("join-chat", async ({ chatId }, callback) => {
-            socket.join(chatId);
-            console.log(`Користувач приєднався до чату ${chatId}`);
 
-            const messages = await findMessages(socket.user._id, chatId, 0, 20);
-
+        function renderMessage(params, callback) {
             ejs.renderFile(
                 path.join(__dirname, '../views/partials/message.ejs'),
-                {
-                    user: socket.user,
-                    messages,
-                    timeAgo: functions.timeAgo, // Додаємо функції явно
-                    formatTime: functions.formatTime
-                },
+                params,
                 (err, renderedMessages) => {
                     if (err) {
                         console.error("Помилка рендерингу повідомлення:", err);
                         return;
                     }
-                    callback({ messages: renderedMessages });
+                    callback(renderedMessages);
                 }
             );
+        }
+
+        socket.on("join-chat", async ({ chatId }, callback) => {
+            try {
+                socket.join(chatId);
+                console.log(`Користувач приєднався до чату ${chatId}`);
+                
+                const cookies = socket.handshake.headers.cookie ? cookie.parse(socket.handshake.headers.cookie) : {};
+                const lang = cookies.lang;
+
+                const messages = await findMessages(socket.user._id, chatId, 0, 20);
+
+                renderMessage(
+                    {
+                        user: socket.user,
+                        messages,
+                        t: (key) => translate(lang, key),
+                        timeAgo: functions.timeAgo, // Додаємо функції явно
+                        formatTime: functions.formatTime
+                    },
+                    (renderedMessages) => callback({ messages: renderedMessages })
+                );
+            } catch (err) {
+                console.error(err);
+                callback({ message: err.message })
+            }
         });
 
         socket.on("send-message", async ({ chatId, text }, callback) => {
             try {
                 if (!chatId || !text) return callback({ error: "Chat or text is not specified" });
+            
+                const cookies = socket.handshake.headers.cookie ? cookie.parse(socket.handshake.headers.cookie) : {};
+                const lang = cookies.lang;
 
                 const message = await createMessage(socket.user._id, chatId, text);
                 const fullMessage = await Message.findById(message._id).populate("sender");
 
-                ejs.renderFile(
-                    path.join(__dirname, '../views/partials/message.ejs'),
+                renderMessage(
                     {
                         user: { _id: -1 },
                         messages: [fullMessage],
+                        t: (key) => translate(lang, key),
                         timeAgo: functions.timeAgo,
                         formatTime: functions.formatTime
                     },
-                    (err, renderedMessage) => {
-                        if (err) {
-                            console.error("Помилка рендерингу повідомлення:", err);
-                            return;
-                        }
-                        io.to(socket.user._id.toString()).emit("new-message", renderedMessage);
-                    }
+                    (renderedMessage) => io.to(socket.user._id.toString()).emit("new-message", renderedMessage)
                 );
 
-                ejs.renderFile(
-                    path.join(__dirname, '../views/partials/message.ejs'),
+                renderMessage(
                     {
                         user: socket.user,
                         messages: [fullMessage],
+                        t: (key) => translate(lang, key),
                         timeAgo: functions.timeAgo,
                         formatTime: functions.formatTime
                     },
-                    (err, renderedMessage) => {
-                        if (err) {
-                            console.error("Помилка рендерингу повідомлення:", err);
-                            return;
-                        }
-                        callback({ message: renderedMessage });
-                    }
+                    (renderedMessage) => callback({ message: renderedMessage })
                 );
             } catch (err) {
                 callback({ error: err.message });

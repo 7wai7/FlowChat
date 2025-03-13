@@ -1,0 +1,24 @@
+{
+    "signin": "Увійти",
+    "signup": "Зареєструватись",
+    "login": "Логін",
+    "invalidLogin": "Некоректний логін",
+    "email": "Електронна пошта",
+    "invalidEmailFormat": "Невірний формат електронної пошти",
+    "password": "Пароль",
+    "password4symbols": "Пароль повинен містити щонайменше 4 символи",
+    "confirmPassword": "Підтвердження пароля",
+    "matchPasswords": "Паролі не співпадають",
+    "doNotHaveAcc": "Не маєте акаунта?",
+    "alreadyHaveAcc": "Вже маєте акаунт?",
+
+    "search": "Пошук",
+    "chooseChat": "Виберіть чат",
+    "createGroup": "Створити групу",
+    "notes": "Нотатки",
+    "settings": "Настройки",
+    "language": "Мова",
+    "logout": "Вийти",
+    "leaveGroup": "Покинути групу",
+    "delete": "Видалити"
+}
