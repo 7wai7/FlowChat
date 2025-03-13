@@ -7,19 +7,26 @@ import { User } from "./models/User.js";
 
 export const findChat = async (userA, userB) => {
     const chat = await ChatConnection.findOne({
-        user1: { $in: [userA, userB] },
-        user2: { $in: [userA, userB] },
+        $or: [
+            { user1: userA, user2: userB },
+            { user1: userB, user2: userA }
+        ],
         group: null
     });
 
     return chat;
 };
 
-export const findMessages = async (userA, userB) => {
+export const findMessages = async (userA, userB, offset, limit) => {
     const chat = await findChat(userA, userB);
     if (!chat) return [];
 
-    const messages = await Message.find({ chat: chat._id }).populate('sender').sort({ createdAt: 1 });
+    const messages = await Message.find({ chat: chat._id })
+        .populate('sender')
+        .sort({ createdAt: -1 })
+        .skip(offset)
+        .limit(limit);
+    
     return messages;
 };
 

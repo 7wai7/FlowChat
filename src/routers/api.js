@@ -27,12 +27,15 @@ const upload = multer({ storage });
 const router = new Router();
 
 
-router.get('/messages/:id', auth, async (req, res, next) => {
+router.get('/messages', auth, async (req, res, next) => {
     try {
         if (!req.user) return res.status(401).json({ message: "Not registered"});
 
-        const entityId = req.params.id;
-        const messages = await findMessages(req.user._id, entityId);
+        const chatId = req.query.chatId;
+        const offset = parseInt(req.query.offset) || 0;
+        const limit = 20;
+
+        const messages = await findMessages(req.user._id, chatId, offset, limit);
 
 
         res.render('partials/message', {

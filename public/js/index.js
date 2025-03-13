@@ -1,4 +1,6 @@
 let isShowingChat = false;
+let isFetching = false;
+let hasMoreMessages = true;
 let currentChatId;
 
 
@@ -19,13 +21,10 @@ function resize() {
             document.getElementById('choose-chat-text').removeAttribute('hidden');
             document.getElementById('chat-wrapper').setAttribute('hidden', '');
             currentChatId = null;
+            hasMoreMessages = true;
         }
     }
 }
-
-
-
-// AJAX FUNCTIONS
 
 async function loadEntities() {
     try {
@@ -55,11 +54,15 @@ async function loadEntities() {
     }
 }
 
-async function loadMessages() {
+async function loadMessagesOnTop() {
     try {
-        const container = document.getElementById('content-container');
+        if (isFetching || !hasMoreMessages) return;
+        isFetching = true;
 
-        const res = await fetch(`/api/messages/${currentChatId}`, { method: 'GET' });
+        const container = document.getElementById('content-container');
+        const offset = container.querySelectorAll('.message').length;
+
+        const res = await fetch(`/api/messages?chatId=${currentChatId}&offset=${offset}`, { method: 'GET' });
         if(res.ok) {
             const htmlText = await res.text();
 
@@ -67,14 +70,18 @@ async function loadMessages() {
             tempDiv.innerHTML = htmlText;
 
             const fragment = document.createDocumentFragment();
+            const messages = tempDiv.querySelectorAll('.message');
+            if (messages.length === 0) hasMoreMessages = false;
 
-            while (tempDiv.firstChild) {
-                fragment.appendChild(tempDiv.firstChild);
-            }
+            messages.forEach((message) => {
+                fragment.prepend(message);
+            });
 
             container.prepend(fragment);
             tempDiv.remove();
+            isFetching = false;
         } else {
+            isFetching = false;
             const data = await res.json();
             console.error(data.message);
         }
@@ -84,19 +91,76 @@ async function loadMessages() {
 }
 
 
+
+
 document.addEventListener("DOMContentLoaded", async () => {
     const socket = io(/* "http://localhost:3000" */ /* window.location.href */ "/", { withCredentials: true, });
 
+
+    function joinToChat() {
+        if(!currentChatId) return;
+        hasMoreMessages = true;
+        
+        socket.emit("join-chat", { chatId: currentChatId }, (res) => {
+            if(res.messages) {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = res.messages;
+
+                const fragment = document.createDocumentFragment();
+                const messages = tempDiv.querySelectorAll('.message');
+
+                messages.forEach((message) => {
+                    fragment.prepend(message); // Додаємо в зворотньому порядку
+                });
+
+                document.getElementById('content-container').prepend(fragment);
+                tempDiv.remove();
+
+                
+                const wrapper = document.getElementById('content-wrapper');
+                wrapper.scroll(0, wrapper.scrollHeight);
+            } else if (res.error) {
+                console.error(res.error);
+            } else {
+                console.log(res);
+            }
+        });
+    }
+
+
     try {
+        socket.on("connected", () => {
+            joinToChat();
+        });
+
         // Отримання нового повідомлення від сервера
         socket.on("new-message", (message) => {
-            console.log("Нове повідомлення:", message);
-            // Тут можна оновити DOM та показати нове повідомлення в UI
+            document.getElementById('content-container').innerHTML += message;
+            const wrapper = document.getElementById('content-wrapper');
+            wrapper.scrollTo({ top: wrapper.scrollHeight, behavior: 'smooth' });
         });
         
     } catch (err) {
         console.error(err);
     }
+
+
+    try {
+        document.getElementById('content-wrapper').addEventListener('scroll', () => {
+            if (!hasMoreMessages || isFetching) return;
+        
+            const wrapper = document.getElementById('content-wrapper');
+            if (!wrapper) return;
+
+            if (wrapper.scrollTop <= 200) {
+                loadMessagesOnTop();
+            }
+        });
+    } catch (err) {
+        console.error(err);
+    }
+
+
 
     try {
         document.getElementById('chats-container').addEventListener('click', async event => {
@@ -116,9 +180,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 currentChatId = entityBtn.dataset.id;
                 document.getElementById('chat-title').innerText = entityBtn.dataset.title;
-                loadMessages();
 
-                socket.emit("join-chat", currentChatId);
+                joinToChat();
             }
         })
 
@@ -249,10 +312,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             document.getElementById('write-message-textarea').value = '';
 
             
-            socket.emit("send-message", { currentChatId, text: message }, (res) => {
-                if (res.error) {
+            socket.emit("send-message", { chatId: currentChatId, text: message }, (res) => {
+                if(res.message) {
+                    document.getElementById('content-container').innerHTML += res.message;
+                    const wrapper = document.getElementById('content-wrapper');
+                    wrapper.scrollTo({ top: wrapper.scrollHeight, behavior: 'smooth' });
+                } else if (res.error) {
                     document.getElementById('write-message-textarea').value = message;
                     console.error(res.error);
+                } else {
+                    console.log(res);
                 }
             });
             
