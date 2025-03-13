@@ -7,7 +7,7 @@ import { dirname } from 'path';
 
 import auth from '../middlewares/auth.js';
 import { User } from '../models/User.js';
-import { createConnection, createMessage, findMessages, generateAvatar } from '../service.js';
+import { createConnection, createMessage, deleteMessage, findMessages, generateAvatar } from '../service.js';
 import ChatConnection from '../models/ChatConnection.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -100,12 +100,15 @@ router.get('/find', auth, async (req, res, next) => {
 
         const chat = req.query.chat;
 
-        const searchEntity = await User.find({ login: chat }).where('_id').ne(req.user._id);
+        const searchChat = await User.find({
+            login: { $regex: `^${chat}`, $options: 'i' } // Пошук за початком логіна (без урахування регістру)
+        })
+        .where('_id')
+        .ne(req.user._id);
 
-        // TODO: add type
         
         res.render('partials/chat', {
-            chats: searchEntity
+            chats: searchChat
         });
     } catch (err) {
         console.error(err);
@@ -182,6 +185,20 @@ router.put("/avatar", auth, async (req, res, next) => {
         next(err);
     }
 });
+
+
+
+router.delete('/message/:id', auth, async (req, res, next) => {
+    try {
+        if (!req.user) return res.status(401).json({ message: "Not registered"});
+        
+        await deleteMessage(req.params.id);
+        res.end();
+    } catch (err) {
+        next(err);
+    }
+});
+
 
 
 export default router;

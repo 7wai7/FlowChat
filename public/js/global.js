@@ -18,8 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
         function calculateDropdownRect(button, content) {
             const buttonRect = button.getBoundingClientRect();
             const contentRect = content.getBoundingClientRect();
-            const screenWidth = window.innerWidth;
-            const screeHeight = window.innerHeight;
+            const screenWidth = content.closest('#content-wrapper')?.offsetWidth || window.innerWidth;
+            const screeHeight = content.closest('#content-wrapper')?.offsetHeight || window.innerHeight;
 
             // Якщо меню виходить за правий край, зміщуємо його ліворуч
             if (buttonRect.right + contentRect.width > screenWidth) {

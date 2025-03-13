@@ -179,6 +179,8 @@ main {
 
 
 #content-wrapper {
+    position: relative;
+    overflow-x: hidden;
     overflow-y: auto;
     flex: 1;
 }
@@ -204,6 +206,19 @@ main {
     padding: 10px;
 }
 
+#scroll-to-down-btn {
+    background: #0a0039;
+    border: 2px solid #fff;
+    border-radius: 50px;
+    position: sticky;
+    left: 90%;
+    bottom: 20px;
+    padding: 6px;
+    width: 30px;
+    height: 30px;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
 .message {
     color: #fff;
     display: inline-flex;
@@ -220,12 +235,13 @@ main {
 }
 
 .message-content {
+    display: inline-flex;
     background: #0a0039;
     padding: 10px;
     border-radius: 12px;
 }
 
-.message-bottom {
+.message-content .bottom {
     display: inline-flex;
     align-items: center;
     justify-content: end;
@@ -233,7 +249,19 @@ main {
 }
 
 .chat .date,
-.message-bottom .date {
+.message-content .bottom .date {
+    font-size: small;
+}
+
+.message-content .col2 {
+    justify-content: space-between;
+}
+
+.message-options {
+    margin: 0 0 auto auto;
+}
+
+.delete-message-btn {
     font-size: small;
 }
 

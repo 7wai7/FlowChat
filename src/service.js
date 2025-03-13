@@ -62,6 +62,12 @@ export const createMessage = async (sender, recipient, text) => {
 
 
 
+export const deleteMessage = async (id) => {
+    await Message.findByIdAndDelete(id);
+}
+
+
+
 
 // Функція для генерації аватарки
 export const generateAvatar = (letter) => {

@@ -4,6 +4,16 @@ let hasMoreMessages = true;
 let currentChatId;
 
 
+function closeChat() {
+    document.getElementById('content-container').innerHTML = '';
+    document.getElementById('choose-chat-text').removeAttribute('hidden');
+    document.getElementById('chat-wrapper').setAttribute('hidden', '');
+    currentChatId = null;
+    hasMoreMessages = true;
+    isShowingChat = false;
+}
+
+
 function resize() {
     if(window.innerWidth <= 800) {
         if(isShowingChat) {
@@ -18,10 +28,7 @@ function resize() {
         document.querySelector('main').removeAttribute('hidden');
 
         if(!isShowingChat) {
-            document.getElementById('choose-chat-text').removeAttribute('hidden');
-            document.getElementById('chat-wrapper').setAttribute('hidden', '');
-            currentChatId = null;
-            hasMoreMessages = true;
+            closeChat();
         }
     }
 }
@@ -146,16 +153,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     try {
+        const wrapper = document.getElementById('content-wrapper');
+        const scrollToDownBtn = document.getElementById('scroll-to-down-btn');
+
         document.getElementById('content-wrapper').addEventListener('scroll', () => {
+            const scrollThreshold = wrapper.scrollHeight - wrapper.offsetHeight - 100;
+
+            if (wrapper.scrollTop < scrollThreshold) {
+                scrollToDownBtn.style.opacity = '1';
+                scrollToDownBtn.style.visibility = 'visible';
+            } else {
+                scrollToDownBtn.style.opacity = '0';
+                scrollToDownBtn.style.visibility = 'hidden';
+            }
+
             if (!hasMoreMessages || isFetching) return;
         
-            const wrapper = document.getElementById('content-wrapper');
-            if (!wrapper) return;
-
             if (wrapper.scrollTop <= 200) {
                 loadMessagesOnTop();
             }
         });
+
+        scrollToDownBtn.addEventListener('click', event => {
+            wrapper.scrollTo({ top: wrapper.scrollHeight, behavior: 'smooth' });
+        })
     } catch (err) {
         console.error(err);
     }
