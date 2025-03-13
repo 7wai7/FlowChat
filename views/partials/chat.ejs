@@ -1,13 +1,13 @@
 <% chats.forEach(chat => { %>
-    <button class="chat" data-id="<%= chat._id %>" data-title="<%= chat.login %>">
-        <img src="api/avatar/<%= chat._id %>" width="40px" class="avatar">
+    <button class="chat" data-id="<%= chat._id %>" data-title="<%= chat.user.login %>">
+        <img src="api/avatar/<%= chat.user._id %>" width="40px" class="avatar">
         <div class="metadata">
             <div class="top">
-                <h3 class="title"><%= chat.login %></h3>
-                <span class="date">00:00</span>
+                <h3 class="title"><%= chat.user.login %></h3>
+                <span class="date"><%= chat.lastMessage ? timeAgo(chat.lastMessage.createdAt) : '' %></span>
             </div>
             <div class="bottom">
-                <span>last message text</span>
+                <span class="last-message"><%= chat.lastMessage?.text %></span>
             </div>
         </div>
     </button>

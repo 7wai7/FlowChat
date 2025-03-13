@@ -10,16 +10,14 @@
             month: '2-digit',
             year: 'numeric'
         }) %>" <%= isOwnMessage ? 'isOwnMessage' : '' %>>
-        <img src="/api/avatar/<%= message.sender._id %>" width="40px" height="40px" class="avatar">
+        <img src="/api/avatar/<%= message.sender._id %>" class="avatar">
         <div class="message-content">
             <div class="col1">
                 <% if(!isOwnMessage) { %>
                     <div class="user-login"><%= message.sender.login %></div>
                 <% } %>
                 <div class="message-text"><%= message.text %></div>
-                <div class="bottom">
-                    <span class="date"><%= timeAgo(message.createdAt) %></span>
-                </div>
+                <span class="date"><%= timeAgo(message.createdAt) %></span>
             </div>
             <div class="col2">
                 <% if(isOwnMessage) { %>
@@ -53,7 +51,7 @@
                     </div>
                 <% } %>
                 <% if(isOwnMessage) { %>
-                    <div class="check mark">
+                    <div class="check-mark">
                         <svg fill="#fff" width="24px" height="24px" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
                             <path d="M760 380.4l-61.6-61.6-263.2 263.1-109.6-109.5L264 534l171.2 171.2L760 380.4z" />
                         </svg>

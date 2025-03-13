@@ -30,6 +30,19 @@ export const findMessages = async (userA, userB, offset, limit) => {
     return messages;
 };
 
+export const findMessagesByChatId = async (id, offset, limit) => {
+    const chat = await ChatConnection.findById(id);
+    if (!chat) return [];
+
+    const messages = await Message.find({ chat: chat._id })
+        .populate('sender')
+        .sort({ createdAt: -1 })
+        .skip(offset)
+        .limit(limit);
+    
+    return messages;
+};
+
 export const findGroupMessages = async (groupId) => {
     const chat = await ChatConnection.findOne({ group: groupId });
     if (!chat) return [];
@@ -46,18 +59,15 @@ export const createConnection = async (userA, userB) => {
 }
 
 export const createMessage = async (sender, recipient, text) => {
-    let existedConnection = await ChatConnection.findOne({ $or: [{ user1: sender, user2: recipient }, { user1: recipient, user2: sender }] });
+    let existedConnection = await ChatConnection.findById(recipient); // TODO: замість отримувача повинен бути id чату
     if(!existedConnection) {
         existedConnection = await createConnection(sender, recipient);
     }
 
     if(!existedConnection) return;
 
-    const recipientUser = await User.findById(recipient);
-    if(recipientUser) {
-        const newMessage = new Message({ chat: existedConnection._id, sender, text });
-        return await newMessage.save();
-    }
+    const newMessage = new Message({ chat: existedConnection._id, sender, text });
+    return await newMessage.save();
 }
 
 

@@ -110,6 +110,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         
         socket.emit("join-chat", { chatId: currentChatId }, (res) => {
             if(res.messages) {
+                const container = document.getElementById('content-container');
+                container.innerHTML = '';
+
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = res.messages;
 
@@ -120,7 +123,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     fragment.prepend(message); // Додаємо в зворотньому порядку
                 });
 
-                document.getElementById('content-container').prepend(fragment);
+                container.prepend(fragment);
                 tempDiv.remove();
 
                 
@@ -146,7 +149,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             const wrapper = document.getElementById('content-wrapper');
             wrapper.scrollTo({ top: wrapper.scrollHeight, behavior: 'smooth' });
         });
-        
+
+        socket.on("delete-message", (id) => {
+            document.querySelector(`[data-id="${id}"]`).remove();
+        });
     } catch (err) {
         console.error(err);
     }
@@ -221,16 +227,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById('content-container').addEventListener('click', async event => {
             const deleteMessageBtn = event.target.closest('.delete-message-btn');
             if(deleteMessageBtn) {
+                if(!currentChatId) return;
+
                 const message = deleteMessageBtn.closest('.message');
                 const id = message.dataset.id;
 
-                const res = await fetch(`/api/message/${id}`, { method: "DELETE" });
-                if(res.ok) {
-                    message.remove();
-                } else {
-                    const data = await res.json();
-                    console.error(data.message);
-                }
+                socket.emit("delete-message", { chatId: currentChatId, id });
             }
         });
     } catch (err) {

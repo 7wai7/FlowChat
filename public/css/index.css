@@ -1,5 +1,5 @@
 #navigation-chats {
-    width: 300px;
+    width: 400px;
     display: flex;
     flex-flow: column;
     background: #0a0039;
@@ -115,7 +115,8 @@
     text-align: left;
 }
 
-#chats-container button .bottom span {
+#chats-container .title,
+#chats-container button .last-message {
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
@@ -124,9 +125,17 @@
     -webkit-box-orient: vertical;
 }
 
+#chats-container .title {
+    font-size: medium;
+    font-weight: 400;
+    text-align: left;
+}
+
 #chats-container .metadata .date {
     margin: auto;
     margin-right: 0;
+    font-size: smaller;
+    white-space: nowrap;
 }
 
 
@@ -236,6 +245,12 @@ main {
     display: none;
 }
 
+.message .avatar {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+}
+
 .message-content {
     display: inline-flex;
     background: #0a0039;
@@ -243,19 +258,24 @@ main {
     border-radius: 12px;
 }
 
-.message-content .bottom {
-    display: inline-flex;
-    align-items: center;
-    justify-content: end;
-    width: 100%;
+.message-content .col1 {
+    display: flex;
+    flex-direction: column;
 }
 
 .chat .date,
-.message-content .bottom .date {
+.message-content .date {
     font-size: small;
 }
 
+.message-content .date {
+    margin: auto;
+    margin-right: 10px;
+}
+
 .message-content .col2 {
+    display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
 }
 
@@ -265,6 +285,11 @@ main {
 
 .delete-message-btn {
     font-size: small;
+}
+
+.message .check-mark {
+    margin: auto;
+    margin-bottom: 0;
 }
 
 

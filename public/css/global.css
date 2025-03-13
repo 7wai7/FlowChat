@@ -7,7 +7,7 @@ html, body {
 body {
     background: #000000;
     display: inline-flex;
-    padding: 0 16%;
+    padding: 0 12%;
     box-sizing: border-box;
 }
 

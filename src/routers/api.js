@@ -7,7 +7,7 @@ import { dirname } from 'path';
 
 import auth from '../middlewares/auth.js';
 import { User } from '../models/User.js';
-import { createConnection, createMessage, deleteMessage, findMessages, generateAvatar } from '../service.js';
+import { createConnection, createMessage, deleteMessage, findMessages, findMessagesByChatId, generateAvatar } from '../service.js';
 import ChatConnection from '../models/ChatConnection.js';
 import { translate } from '../localization.js';
 
@@ -30,15 +30,14 @@ const router = new Router();
 
 router.get('/messages', auth, async (req, res, next) => {
     try {
-        if (!req.user) return res.status(401).json({ message: "Not registered"});
+        if (!req.user) return res.status(401).json({ error: "Not registered"});
         const lang = req.cookies.lang || "en";
 
         const chatId = req.query.chatId;
         const offset = parseInt(req.query.offset) || 0;
         const limit = 20;
 
-        const messages = await findMessages(req.user._id, chatId, offset, limit);
-
+        const messages = await findMessagesByChatId(chatId, offset, limit);
 
         res.render('partials/message', {
             user: req.user,
@@ -79,15 +78,36 @@ router.get('/chats', auth, async (req, res, next) => {
                             }
                         },
                         {
-                            $project: { _id: 1, login: 1, email: 1 }
+                            $project: { _id: 1, login: 1 }
                         }
                     ],
-                    as: "chat"
+                    as: "user"
                 }
             },
-            { $unwind: "$chat" },
-            { $replaceRoot: { newRoot: "$chat" } }
+            { $unwind: "$user" },
+            {
+                $lookup: {
+                    from: "messages",
+                    localField: "_id",
+                    foreignField: "chat",
+                    as: "lastMessage",
+                    pipeline: [
+                        { $sort: { createdAt: -1 } }, // Сортуємо повідомлення за датою (останнє перше)
+                        { $limit: 1 } // Беремо тільки одне (останнє)
+                    ]
+                }
+            },
+            { $unwind: { path: "$lastMessage", preserveNullAndEmptyArrays: true } }, // Залишаємо null, якщо немає повідомлень
+            /* {
+                $set: {
+                    "chat.lastMessage": "$lastMessage" // Додаємо lastMessage всередину chat
+                }
+            }, */
+            /* { $replaceRoot: { newRoot: "$chat" } } */
         ]);
+
+        /* console.log(connections); */
+        
         
         res.render('partials/chat', {
             chats: connections,
@@ -188,19 +208,6 @@ router.put("/avatar", auth, async (req, res, next) => {
 
             return res.json("Avatar uploaded successfully");
         })
-    } catch (err) {
-        next(err);
-    }
-});
-
-
-
-router.delete('/message/:id', auth, async (req, res, next) => {
-    try {
-        if (!req.user) return res.status(401).json({ message: "Not registered"});
-        
-        await deleteMessage(req.params.id);
-        res.end();
     } catch (err) {
         next(err);
     }

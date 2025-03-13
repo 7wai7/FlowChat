@@ -9,8 +9,9 @@ import ejs from 'ejs';
 import functions from './functions.js';
 import { User } from "./models/User.js";
 import Message from "./models/Message.js";
-import { createMessage, findMessages } from "./service.js";
+import { createMessage, deleteMessage, findMessages, findMessagesByChatId } from "./service.js";
 import { translate } from './localization.js';
+import { callbackify } from "util";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -46,8 +47,6 @@ export function initSocket(server) {
     });
 
     io.on("connection", async (socket) => {
-        console.log("Користувач підключився:", socket.id);
-
         socket.emit('connected', {});
 
 
@@ -58,22 +57,22 @@ export function initSocket(server) {
                 (err, renderedMessages) => {
                     if (err) {
                         console.error("Помилка рендерингу повідомлення:", err);
-                        return;
+                        return callback({ message: err.message });
                     }
                     callback(renderedMessages);
                 }
             );
         }
 
-        socket.on("join-chat", async ({ chatId }, callback) => {
+        socket.on("join-chat", async ({ chatId }, callback) => { // TODO: потрібно додати відключення від чату
             try {
                 socket.join(chatId);
                 console.log(`Користувач приєднався до чату ${chatId}`);
                 
                 const cookies = socket.handshake.headers.cookie ? cookie.parse(socket.handshake.headers.cookie) : {};
-                const lang = cookies.lang;
+                const lang = cookies.lang || "en";
 
-                const messages = await findMessages(socket.user._id, chatId, 0, 20);
+                const messages = await findMessagesByChatId(chatId, 0, 20);
 
                 renderMessage(
                     {
@@ -96,25 +95,25 @@ export function initSocket(server) {
                 if (!chatId || !text) return callback({ error: "Chat or text is not specified" });
             
                 const cookies = socket.handshake.headers.cookie ? cookie.parse(socket.handshake.headers.cookie) : {};
-                const lang = cookies.lang;
+                const lang = cookies.lang || "en";
 
                 const message = await createMessage(socket.user._id, chatId, text);
                 const fullMessage = await Message.findById(message._id).populate("sender");
 
                 renderMessage(
                     {
-                        user: { _id: -1 },
+                        user: { _id: -1 }, // рендерим повідомлення для інших користувачів чату. "_id: -1" для того, щоб isOwnMessage було false
                         messages: [fullMessage],
                         t: (key) => translate(lang, key),
                         timeAgo: functions.timeAgo,
                         formatTime: functions.formatTime
                     },
-                    (renderedMessage) => io.to(socket.user._id.toString()).emit("new-message", renderedMessage)
+                    (renderedMessage) => socket.to(chatId).emit("new-message", renderedMessage)
                 );
 
                 renderMessage(
                     {
-                        user: socket.user,
+                        user: socket.user, // рендерим для відправника
                         messages: [fullMessage],
                         t: (key) => translate(lang, key),
                         timeAgo: functions.timeAgo,
@@ -127,8 +126,19 @@ export function initSocket(server) {
             }
         });
 
+        socket.on("delete-message", async (req) => {
+            try {
+                const { chatId, id } = req;
+
+                await deleteMessage(id);
+                
+                io.to(chatId).emit("delete-message", id);
+            } catch (err) {
+                console.log(err);
+            }
+        })
+
         socket.on("disconnect", () => {
-            console.log("Користувач відключився:", socket.id);
         });
     });
 

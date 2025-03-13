@@ -20,5 +20,6 @@
     "language": "Language",
     "logout": "Log out",
     "leaveGroup": "Leave the group",
-    "delete": "Delete"
+    "delete": "Delete",
+    "writeMessage": "Write message..."
 }
