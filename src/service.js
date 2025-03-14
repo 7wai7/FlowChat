@@ -58,10 +58,10 @@ export const createConnection = async (userA, userB) => {
     return await newConnection.save();
 }
 
-export const createMessage = async (sender, recipient, text) => {
-    let existedConnection = await ChatConnection.findById(recipient); // TODO: замість отримувача повинен бути id чату
+export const createMessage = async (sender, chatId, text) => {
+    let existedConnection = chatId ? await ChatConnection.findById(chatId) : null; // TODO: замість отримувача повинен бути id чату
     if(!existedConnection) {
-        existedConnection = await createConnection(sender, recipient);
+        existedConnection = await createConnection(sender, chatId);
     }
 
     if(!existedConnection) return;

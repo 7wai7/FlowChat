@@ -216,6 +216,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             document.getElementById('navigation-chats').removeAttribute('hidden');
             document.querySelector('main').setAttribute('hidden', '');
             isShowingChat = false;
+            socket.emit("leave-chat", currentChatId);
             currentChatId = null;
         })
     } catch (err) {
@@ -317,7 +318,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const formData = new FormData();
                 formData.append("avatar", file); 
 
-                const res = await await fetch(`/api/avatar`, {
+                const res = await fetch(`/api/avatar`, {
                     method: 'PUT',
                     body: formData
                 })
@@ -377,14 +378,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     try {
-        document.getElementById('lang-dropdown-content').addEventListener('click', event => {
-            if(event.target.matches('button')) {
-                const btn = event.target;
-                document.cookie = `lang=${btn.dataset.lang}`; 
-                btn.closest('.content').setAttribute('hidden', '');
-            }
-        })
-
         document.getElementById('logout-btn').addEventListener('click', async event => {
             const res = await fetch('/api/auth/logout', { method: "POST" })
             if(res.ok) window.location.href = '/auth';
@@ -404,10 +397,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             const message = document.getElementById('write-message-textarea').value;
             if(!message.trim()) return;
 
-            if(!currentChatId) {
+            /* if(!currentChatId) {
                 console.error('The current chat id value is not written');
                 return;
-            }
+            } */
 
             document.getElementById('write-message-textarea').value = '';
 

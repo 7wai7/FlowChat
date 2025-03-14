@@ -5,9 +5,16 @@ main {
     height: 100%;
 
     font-family: Arial, sans-serif;
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.lang-dropdown {
+    position: absolute;
+    top: 20px;
+    left: 20px;
 }
 
 .form-container {

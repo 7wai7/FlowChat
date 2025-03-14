@@ -106,7 +106,7 @@ router.get('/chats', auth, async (req, res, next) => {
             /* { $replaceRoot: { newRoot: "$chat" } } */
         ]);
 
-        /* console.log(connections); */
+        console.log(connections);
         
         
         res.render('partials/chat', {
@@ -124,13 +124,42 @@ router.get('/find', auth, async (req, res, next) => {
         if (!req.user) return res.status(401).json({ message: "Not registered"});
         const lang = req.cookies.lang || "en";
 
-        const chat = req.query.chat;
+        const chatName = req.query.chat;
 
-        const searchChat = await User.find({
-            login: { $regex: `^${chat}`, $options: 'i' } // Пошук за початком логіна (без урахування регістру)
+        /* const searchChat = await User.find({ // TODO: шукати потрібно чати за логіном і зробити populate для user
+            login: { $regex: `^${chatName}`, $options: 'i' } // Пошук за початком логіна (без урахування регістру)
         })
         .where('_id')
-        .ne(req.user._id);
+        .ne(req.user._id); */
+
+        const searchChat = await User.aggregate([
+            {
+                $match: { login: { $regex: `^${chatName}`, $options: 'i' } }
+            },
+            {
+                $addFields: {
+                    chat: {
+                        _id: null,
+                        user: {
+                            
+                        }
+                    }
+                }
+            },
+            {
+                $set: {
+                    "chat.user._id": "$_id"
+                }
+            },
+            {
+                $set: {
+                    "chat.user.login": "$login"
+                }
+            },
+            { $replaceRoot: { newRoot: "$chat" } }
+        ])
+
+        console.log(searchChat);
 
         
         res.render('partials/chat', {

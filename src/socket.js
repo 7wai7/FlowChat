@@ -64,10 +64,10 @@ export function initSocket(server) {
             );
         }
 
-        socket.on("join-chat", async ({ chatId }, callback) => { // TODO: потрібно додати відключення від чату
+        socket.on("join-chat", async ({ chatId }, callback) => {
             try {
                 socket.join(chatId);
-                console.log(`Користувач приєднався до чату ${chatId}`);
+                console.log(`Користувач ${socket.id} приєднався до чату ${chatId}`);
                 
                 const cookies = socket.handshake.headers.cookie ? cookie.parse(socket.handshake.headers.cookie) : {};
                 const lang = cookies.lang || "en";
@@ -90,15 +90,29 @@ export function initSocket(server) {
             }
         });
 
+        socket.on("leave-chat", async (chatId) => {
+            try {
+                socket.leave(chatId);
+                console.log(`Користувач ${socket.id} покинув чат ${chatId}`);
+            } catch (error) {
+                console.error("Помилка виходу з чату:", error);
+            }
+        });
+
         socket.on("send-message", async ({ chatId, text }, callback) => {
             try {
-                if (!chatId || !text) return callback({ error: "Chat or text is not specified" });
+                if (!text) return callback({ error: "Chat or text is not specified" });
             
                 const cookies = socket.handshake.headers.cookie ? cookie.parse(socket.handshake.headers.cookie) : {};
                 const lang = cookies.lang || "en";
 
                 const message = await createMessage(socket.user._id, chatId, text);
                 const fullMessage = await Message.findById(message._id).populate("sender");
+
+                console.log(chatId);
+                
+                chatId = fullMessage.chatId; // якщо чат створено динамічно при надсиланні повідомлення
+                console.log(chatId);
 
                 renderMessage(
                     {
@@ -122,6 +136,7 @@ export function initSocket(server) {
                     (renderedMessage) => callback({ message: renderedMessage })
                 );
             } catch (err) {
+                console.error(err);
                 callback({ error: err.message });
             }
         });

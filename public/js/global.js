@@ -86,4 +86,17 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) {
         console.error(error);
     }
+
+
+    try {
+        document.getElementById('lang-dropdown-content').addEventListener('click', event => {
+            if(event.target.matches('button')) {
+                const btn = event.target;
+                document.cookie = `lang=${btn.dataset.lang}`;
+                window.location.reload();
+            }
+        })
+    } catch (error) {
+        console.error(error);
+    }
 });
