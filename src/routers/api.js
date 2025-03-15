@@ -7,9 +7,10 @@ import { dirname } from 'path';
 
 import auth from '../middlewares/auth.js';
 import { User } from '../models/User.js';
-import { createConnection, createMessage, deleteMessage, findMessages, findMessagesByChatId, generateAvatar } from '../service.js';
+import { createMessage, deleteMessage, findMessages, findMessagesByChatId, generateAvatar } from '../service.js';
 import ChatConnection from '../models/ChatConnection.js';
 import { translate } from '../localization.js';
+import ChatParticipant from '../models/ChatParticipant.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -38,12 +39,11 @@ router.get('/messages', auth, async (req, res, next) => {
         const limit = 20;
 
         const messages = await findMessagesByChatId(chatId, offset, limit);
+        const translations = {
+            delete: translate(lang, "delete")
+        };
 
-        res.render('partials/message', {
-            user: req.user,
-            messages,
-            t: (key) => translate(lang, key)
-        });
+        res.json({ messages, translations })
     } catch (err) {
         console.error(err);
         next(err);
@@ -55,36 +55,48 @@ router.get('/chats', auth, async (req, res, next) => {
         if (!req.user) return res.status(401).json({ message: "Not registered"});
         const lang = req.cookies.lang || "en";
 
-        const connections = await ChatConnection.aggregate([
-            {
-                $match: {
-                    $or: [{ user1: req.user._id }, { user2: req.user._id }]
-                }
+        const chats = await ChatParticipant.aggregate([
+            { 
+                $match: { user: req.user._id } 
             },
             {
                 $lookup: {
-                    from: "users",
-                    let: { user1: "$user1", user2: "$user2" },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $cond: {
-                                        if: { $eq: ["$$user1", req.user._id] },
-                                        then: { $eq: ["$_id", "$$user2"] },
-                                        else: { $eq: ["$_id", "$$user1"] }
-                                    }
-                                }
-                            }
-                        },
-                        {
-                            $project: { _id: 1, login: 1 }
-                        }
-                    ],
-                    as: "user"
+                    from: 'chats',
+                    localField: 'chat',
+                    foreignField: '_id',
+                    as: 'chat'
                 }
             },
-            { $unwind: "$user" },
+            { $unwind: "$chat" },
+            {
+                $set: { "chat.user1": "$user" }
+            },
+            {
+                $lookup: {
+                    from: 'chatparticipants', // Шукаємо всіх учасників цього чату
+                    let: { chatId: "$chat._id", currentUser: "$user" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ["$chat", "$$chatId"] } } }, // Беремо учасників цього чату
+                        { $match: { $expr: { $ne: ["$user", "$$currentUser"] } } }, // Відкидаємо поточного користувача
+                        { $limit: 1 } // Нам потрібен тільки один інший користувач
+                    ],
+                    as: "otherUser"
+                }
+            },
+            {
+                $set: { "chat.user2": { $arrayElemAt: ["$otherUser.user", 0] } } // Додаємо user2
+            },
+            { $unset: "otherUser" }, // Прибираємо тимчасове поле
+            { $replaceRoot: { newRoot: "$chat" } },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'user2',
+                    foreignField: '_id',
+                    as: 'user2'
+                }
+            },
+            { $unwind: "$user2" },
             {
                 $lookup: {
                     from: "messages",
@@ -98,20 +110,10 @@ router.get('/chats', auth, async (req, res, next) => {
                 }
             },
             { $unwind: { path: "$lastMessage", preserveNullAndEmptyArrays: true } }, // Залишаємо null, якщо немає повідомлень
-            /* {
-                $set: {
-                    "chat.lastMessage": "$lastMessage" // Додаємо lastMessage всередину chat
-                }
-            }, */
-            /* { $replaceRoot: { newRoot: "$chat" } } */
         ]);
 
-        console.log(connections);
-        
-        
         res.render('partials/chat', {
-            chats: connections,
-            t: (key) => translate(lang, key)
+            chats: chats
         });
     } catch (err) {
         console.error(err);
@@ -126,44 +128,91 @@ router.get('/find', auth, async (req, res, next) => {
 
         const chatName = req.query.chat;
 
-        /* const searchChat = await User.find({ // TODO: шукати потрібно чати за логіном і зробити populate для user
-            login: { $regex: `^${chatName}`, $options: 'i' } // Пошук за початком логіна (без урахування регістру)
-        })
-        .where('_id')
-        .ne(req.user._id); */
-
-        const searchChat = await User.aggregate([
+        const searchChats = await User.aggregate([
+            // Пошук користувачів за логіном
             {
-                $match: { login: { $regex: `^${chatName}`, $options: 'i' } }
+                $match: {
+                    login: { $regex: `^${chatName}`, $options: 'i' }, // Пошук за логіном
+                    _id: { $ne: req.user._id } // Виключаємо поточного користувача
+                }
             },
+            // Знаходимо всі чати, в яких бере участь поточний користувач
             {
-                $addFields: {
-                    chat: {
-                        _id: null,
-                        user: {
-                            
+                $lookup: {
+                    from: "chatparticipants",
+                    let: { currentUserId: req.user._id },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ["$user", "$$currentUserId"] } } }
+                    ],
+                    as: "currentUserChats"
+                }
+            },
+            // Шукаємо, чи знайдений користувач є в тих самих чатах
+            {
+                $lookup: {
+                    from: "chatparticipants",
+                    let: { userId: "$_id", chats: "$currentUserChats.chat" },
+                    pipeline: [
+                        { 
+                            $match: { 
+                                $expr: { 
+                                    $and: [
+                                        { $in: ["$chat", "$$chats"] }, // Перевіряємо, чи є чат у списку
+                                        { $eq: ["$user", "$$userId"] } // Чи є цей користувач у чаті
+                                    ]
+                                }
+                            } 
                         }
-                    }
+                    ],
+                    as: "commonChatParticipants"
+                }
+            },
+            // Додаємо інформацію про спільні чати
+            {
+                $lookup: {
+                    from: "chats",
+                    localField: "commonChatParticipants.chat",
+                    foreignField: "_id",
+                    as: "commonChats"
+                }
+            },
+            // Групуємо результати, щоб уникнути дублікатів
+            {
+                $group: {
+                    _id: "$_id",
+                    login: { $first: "$login" },
+                    email: { $first: "$email" },
+                    password: { $first: "$password" },
+                    role: { $first: "$role" },
+                    createdAt: { $first: "$createdAt" },
+                    updatedAt: { $first: "$updatedAt" },
+                    __v: { $first: "$__v" },
+                    chat: { $first: { $arrayElemAt: ["$commonChats", 0] } } // Беремо тільки один спільний чат
+                }
+            },
+            // Якщо немає спільних чатів, то встановлюємо chat: null
+            {
+                $set: {
+                    chat: { $ifNull: ["$chat", null] }
                 }
             },
             {
-                $set: {
-                    "chat.user._id": "$_id"
+                $lookup: {
+                    from: "messages",
+                    localField: "chat._id",
+                    foreignField: "chat",
+                    as: "lastMessage",
+                    pipeline: [
+                        { $sort: { createdAt: -1 } }, // Сортуємо повідомлення за датою (останнє перше)
+                        { $limit: 1 } // Беремо тільки одне (останнє)
+                    ]
                 }
             },
-            {
-                $set: {
-                    "chat.user.login": "$login"
-                }
-            },
-            { $replaceRoot: { newRoot: "$chat" } }
-        ])
+            { $unwind: { path: "$lastMessage", preserveNullAndEmptyArrays: true } }, // Залишаємо null, якщо немає повідомлень
+        ]);
 
-        console.log(searchChat);
-
-        
         res.render('partials/chat', {
-            chats: searchChat,
+            chats: searchChats,
             t: (key) => translate(lang, key)
         });
     } catch (err) {

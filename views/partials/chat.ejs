@@ -1,13 +1,18 @@
-<% chats.forEach(chat => { %>
-    <button class="chat" data-id="<%= chat._id %>" data-title="<%= chat.user.login %>">
-        <img src="api/avatar/<%= chat.user._id %>" width="40px" class="avatar">
+<% chats.forEach(chat => { 
+    let id = chat.chat?._id || chat._id;
+    let userId = chat.user2?._id || chat._id;
+    let title = chat.chat ? chat.login : chat.user2?.login || chat.name || chat.login;
+    let avatarId = chat.type === 'group' ? chat._id : userId;
+%>
+    <button class="chat" data-id="<%= id %>" data-userid="<%= chat.type !== 'group' ? userId : '' %>" data-title="<%= title %>">
+        <img src="api/avatar/<%= avatarId %>" width="40px" class="avatar">
         <div class="metadata">
             <div class="top">
-                <h3 class="title"><%= chat.user.login %></h3>
-                <span class="date"><%= chat.lastMessage ? timeAgo(chat.lastMessage.createdAt) : '' %></span>
+                <h3 class="title"><%= title %></h3>
+                <span class="date" data-date="<%= chat.lastMessage?.createdAt %>"></span>
             </div>
             <div class="bottom">
-                <span class="last-message"><%= chat.lastMessage?.text %></span>
+                <span class="last-message"><%= chat.lastMessage?.content %></span>
             </div>
         </div>
     </button>

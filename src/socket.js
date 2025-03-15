@@ -47,19 +47,19 @@ export function initSocket(server) {
     });
 
     io.on("connection", async (socket) => {
-        socket.emit('connected', {});
+        socket.emit('connected', socket.user._id);
 
 
-        function renderMessage(params, callback) {
+        function render(path_, params, callback) {
             ejs.renderFile(
-                path.join(__dirname, '../views/partials/message.ejs'),
+                path.join(__dirname, `../views${path_}.ejs`),
                 params,
-                (err, renderedMessages) => {
+                (err, rendered) => {
                     if (err) {
                         console.error("Помилка рендерингу повідомлення:", err);
                         return callback({ message: err.message });
                     }
-                    callback(renderedMessages);
+                    callback(rendered);
                 }
             );
         }
@@ -73,17 +73,9 @@ export function initSocket(server) {
                 const lang = cookies.lang || "en";
 
                 const messages = await findMessagesByChatId(chatId, 0, 20);
+                const translations = {}
 
-                renderMessage(
-                    {
-                        user: socket.user,
-                        messages,
-                        t: (key) => translate(lang, key),
-                        timeAgo: functions.timeAgo, // Додаємо функції явно
-                        formatTime: functions.formatTime
-                    },
-                    (renderedMessages) => callback({ messages: renderedMessages })
-                );
+                callback({ messages, translations })
             } catch (err) {
                 console.error(err);
                 callback({ message: err.message })
@@ -99,42 +91,32 @@ export function initSocket(server) {
             }
         });
 
-        socket.on("send-message", async ({ chatId, text }, callback) => {
+        socket.on("send-message", async ({ chatId, recipient, content }, callback) => {
             try {
-                if (!text) return callback({ error: "Chat or text is not specified" });
+                if (!recipient || !content) return callback({ error: "Recipient or content is not specified" });
             
                 const cookies = socket.handshake.headers.cookie ? cookie.parse(socket.handshake.headers.cookie) : {};
                 const lang = cookies.lang || "en";
 
-                const message = await createMessage(socket.user._id, chatId, text);
+                const message = await createMessage(chatId, socket.user._id, recipient, content);
                 const fullMessage = await Message.findById(message._id).populate("sender");
 
-                console.log(chatId);
-                
-                chatId = fullMessage.chatId; // якщо чат створено динамічно при надсиланні повідомлення
-                console.log(chatId);
+                const translations = {
+                    delete: translate(lang, "delete")
+                }
 
-                renderMessage(
-                    {
-                        user: { _id: -1 }, // рендерим повідомлення для інших користувачів чату. "_id: -1" для того, щоб isOwnMessage було false
-                        messages: [fullMessage],
-                        t: (key) => translate(lang, key),
-                        timeAgo: functions.timeAgo,
-                        formatTime: functions.formatTime
-                    },
-                    (renderedMessage) => socket.to(chatId).emit("new-message", renderedMessage)
-                );
+                let isUpdatedChatId = false;
+                if(parseInt(chatId) === -1) {
+                    chatId = fullMessage.chat; // якщо чат створено динамічно при надсиланні повідомлення
+                    isUpdatedChatId = true;
+                    socket.join(chatId);
+                    
+                    socket.emit("new-message", { chatId, isUpdatedChatId, message: fullMessage, translations });
+                    socket.to(chatId).emit("new-message", { chatId, isUpdatedChatId, message: fullMessage, translations })
+                    return;
+                }
 
-                renderMessage(
-                    {
-                        user: socket.user, // рендерим для відправника
-                        messages: [fullMessage],
-                        t: (key) => translate(lang, key),
-                        timeAgo: functions.timeAgo,
-                        formatTime: functions.formatTime
-                    },
-                    (renderedMessage) => callback({ message: renderedMessage })
-                );
+                io.to(chatId).emit("new-message", { chatId, isUpdatedChatId, message: fullMessage, translations })
             } catch (err) {
                 console.error(err);
                 callback({ error: err.message });

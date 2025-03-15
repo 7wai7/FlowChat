@@ -16,7 +16,7 @@
                 <% if(!isOwnMessage) { %>
                     <div class="user-login"><%= message.sender.login %></div>
                 <% } %>
-                <div class="message-text"><%= message.text %></div>
+                <div class="message-text"><%= message.content %></div>
                 <span class="date"><%= timeAgo(message.createdAt) %></span>
             </div>
             <div class="col2">

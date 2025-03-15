@@ -1,7 +1,10 @@
+let userId;
 let isShowingChat = false;
 let isFetching = false;
 let hasMoreMessages = true;
 let currentChatId;
+let currentChatElement;
+let currentChatUserId;
 
 
 function closeChat() {
@@ -9,6 +12,8 @@ function closeChat() {
     document.getElementById('choose-chat-text').removeAttribute('hidden');
     document.getElementById('chat-wrapper').setAttribute('hidden', '');
     currentChatId = null;
+    currentChatElement = null;
+    currentChatUserId = null;
     hasMoreMessages = true;
     isShowingChat = false;
 }
@@ -44,6 +49,10 @@ async function loadChats() {
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = htmlText;
 
+            tempDiv.querySelectorAll('.date').forEach(dateEl => {
+                dateEl.innerText = dateEl.dataset.date ? timeAgo(dateEl.dataset.date) : '';
+            })
+
             const fragment = document.createDocumentFragment();
     
             while (tempDiv.firstChild) {
@@ -71,21 +80,8 @@ async function loadMessagesOnTop() {
 
         const res = await fetch(`/api/messages?chatId=${currentChatId}&offset=${offset}`, { method: 'GET' });
         if(res.ok) {
-            const htmlText = await res.text();
-
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlText;
-
-            const fragment = document.createDocumentFragment();
-            const messages = tempDiv.querySelectorAll('.message');
-            if (messages.length === 0) hasMoreMessages = false;
-
-            messages.forEach((message) => {
-                fragment.prepend(message);
-            });
-
-            container.prepend(fragment);
-            tempDiv.remove();
+            const data = await res.json();
+            await appendMessages(data.messages, data.translations);
             isFetching = false;
         } else {
             isFetching = false;
@@ -98,6 +94,65 @@ async function loadMessagesOnTop() {
 }
 
 
+async function loadMessageTemplate() {
+    const response = await fetch('/html/message.html');
+    return await response.text();
+}
+
+async function renderMessage(message, translations) {
+    let template = await loadMessageTemplate();
+
+    // Визначаємо, чи це повідомлення поточного користувача
+    const isOwnMessage = userId === message.sender._id;
+
+    // Замінюємо плейсхолдери реальними даними
+    template = template
+        .replace('{id}', message._id)
+        .split('{sender_id}').join(message.sender._id)
+        .replace('{createdAt}', new Date(message.createdAt).toLocaleDateString('uk-UA', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }))
+        .replace('{login}', message.sender.login)
+        .replace('{content}', message.content)
+        .replace('{timeAgo}', timeAgo(message.createdAt))
+        .replace('{delete}', translations.delete);
+
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = template.trim();
+
+    const messageElement = tempDiv.firstChild;
+
+    if (isOwnMessage) {
+        messageElement.setAttribute('isOwnMessage', '');
+        messageElement.querySelector('.user-login').remove();
+        messageElement.querySelector('.avatar').remove();
+    } else {
+        messageElement.querySelector('.message-options').remove();
+        messageElement.querySelector('.check-mark').remove();
+    }
+
+    return messageElement;
+}
+
+async function appendMessages(messages, translations) {
+    const chatContainer = document.getElementById('content-container');
+    const fragment = document.createDocumentFragment();
+
+    for (const message of messages) {
+        const messageElement = await renderMessage(message, translations);
+        fragment.prepend(messageElement); // Додаємо в зворотньому порядку
+    }
+
+    chatContainer.appendChild(fragment);
+}
+
+
+
 
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -105,28 +160,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     function joinToChat() {
-        if(!currentChatId) return;
+        if(!currentChatId || parseInt(currentChatId) === -1) return;
         hasMoreMessages = true;
         
-        socket.emit("join-chat", { chatId: currentChatId }, (res) => {
+        socket.emit("join-chat", { chatId: currentChatId }, async (res) => {
             if(res.messages) {
-                const container = document.getElementById('content-container');
-                container.innerHTML = '';
+                document.getElementById('content-container').innerHTML = '';
+                isFetching = false;
+                hasMoreMessages = true;
+                await loadMessagesOnTop();
 
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = res.messages;
-
-                const fragment = document.createDocumentFragment();
-                const messages = tempDiv.querySelectorAll('.message');
-
-                messages.forEach((message) => {
-                    fragment.prepend(message); // Додаємо в зворотньому порядку
-                });
-
-                container.prepend(fragment);
-                tempDiv.remove();
-
-                
                 const wrapper = document.getElementById('content-wrapper');
                 wrapper.scroll(0, wrapper.scrollHeight);
             } else if (res.error) {
@@ -136,16 +179,29 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
     }
+    
 
 
     try {
-        socket.on("connected", () => {
+        socket.on("connected", (userId_) => {
+            userId = userId_;
             joinToChat();
         });
 
         // Отримання нового повідомлення від сервера
-        socket.on("new-message", (message) => {
-            document.getElementById('content-container').innerHTML += message;
+        socket.on("new-message", async ({ chatId, isUpdatedChatId, message, translations }) => {
+            await appendMessages([message], translations);
+            
+            if(isUpdatedChatId) {
+                currentChatId = chatId;
+                currentChatElement.dataset.id = chatId;
+                joinToChat(); // Перезапускаємо приєднання до чату
+            }
+
+            const chat = document.querySelector(`#chats-container [data-id="${currentChatId}"]`)
+            chat.querySelector('.last-message').innerText = message.content;
+            chat.querySelector('.date').innerText = timeAgo(message.createdAt);
+
             const wrapper = document.getElementById('content-wrapper');
             wrapper.scrollTo({ top: wrapper.scrollHeight, behavior: 'smooth' });
         });
@@ -206,6 +262,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 isShowingChat = true;
 
                 currentChatId = entityBtn.dataset.id;
+                currentChatElement = entityBtn;
+                currentChatUserId = entityBtn.dataset.userid;
                 document.getElementById('chat-title').innerText = entityBtn.dataset.title;
 
                 joinToChat();
@@ -218,6 +276,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             isShowingChat = false;
             socket.emit("leave-chat", currentChatId);
             currentChatId = null;
+            currentChatElement = null;
+            currentChatUserId = null;
         })
     } catch (err) {
         console.error(err);
@@ -347,6 +407,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = htmlText;
+
+                tempDiv.querySelectorAll('.date').forEach(dateEl => {
+                    dateEl.innerText = dateEl.dataset.date ? timeAgo(dateEl.dataset.date) : '';
+                })
         
                 const fragment = document.createDocumentFragment();
         
@@ -394,24 +458,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
         async function sendMessage() {
-            const message = document.getElementById('write-message-textarea').value;
-            if(!message.trim()) return;
+            const content = document.getElementById('write-message-textarea').value;
+            if(!content.trim()) return;
 
-            /* if(!currentChatId) {
+            if(!currentChatId) {
                 console.error('The current chat id value is not written');
                 return;
-            } */
+            }
 
             document.getElementById('write-message-textarea').value = '';
 
-            
-            socket.emit("send-message", { chatId: currentChatId, text: message }, (res) => {
-                if(res.message) {
-                    document.getElementById('content-container').innerHTML += res.message;
-                    const wrapper = document.getElementById('content-wrapper');
-                    wrapper.scrollTo({ top: wrapper.scrollHeight, behavior: 'smooth' });
-                } else if (res.error) {
-                    document.getElementById('write-message-textarea').value = message;
+            socket.emit("send-message", { chatId: currentChatId, recipient: currentChatUserId, content }, (res) => {
+                console.log(res);
+                if (res.error) {
+                    document.getElementById('write-message-textarea').value = content;
                     console.error(res.error);
                 } else {
                     console.log(res);

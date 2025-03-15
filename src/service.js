@@ -3,6 +3,8 @@ import { createCanvas } from "canvas";
 import ChatConnection from "./models/ChatConnection.js";
 import Message from "./models/Message.js";
 import { User } from "./models/User.js";
+import Chat from "./models/Chat.js";
+import ChatParticipant from "./models/ChatParticipant.js";
 
 
 export const findChat = async (userA, userB) => {
@@ -30,8 +32,8 @@ export const findMessages = async (userA, userB, offset, limit) => {
     return messages;
 };
 
-export const findMessagesByChatId = async (id, offset, limit) => {
-    const chat = await ChatConnection.findById(id);
+export const findMessagesByChatId = async (chatId, offset, limit) => {
+    const chat = parseInt(chatId) !== -1 ? await Chat.findById(chatId) : null;
     if (!chat) return [];
 
     const messages = await Message.find({ chat: chat._id })
@@ -52,21 +54,20 @@ export const findGroupMessages = async (groupId) => {
 };
 
 
+export const createMessage = async (chatId, sender, recipient, content) => {
+    let existedChat = parseInt(chatId) !== -1 ? await Chat.findById(chatId) : null;
+    if(!existedChat) {
+        const newChat = new Chat({ type: 'private' });
+        existedChat = await newChat.save();
 
-export const createConnection = async (userA, userB) => {
-    const newConnection = new ChatConnection({ user1: userA, user2: userB });
-    return await newConnection.save();
-}
+        const newParticipantSender = new ChatParticipant({ chat: newChat._id, user: sender });
+        await newParticipantSender.save();
 
-export const createMessage = async (sender, chatId, text) => {
-    let existedConnection = chatId ? await ChatConnection.findById(chatId) : null; // TODO: замість отримувача повинен бути id чату
-    if(!existedConnection) {
-        existedConnection = await createConnection(sender, chatId);
+        const newParticipantRecipient = new ChatParticipant({ chat: newChat._id, user: recipient });
+        await newParticipantRecipient.save();
     }
 
-    if(!existedConnection) return;
-
-    const newMessage = new Message({ chat: existedConnection._id, sender, text });
+    const newMessage = new Message({ chat: existedChat._id, sender, content });
     return await newMessage.save();
 }
 

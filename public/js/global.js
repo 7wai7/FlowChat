@@ -1,4 +1,81 @@
 
+function getCookie(name) {
+    return document.cookie
+        .split('; ')
+        .find(row => row.startsWith(name + '='))
+        ?.split('=')[1] || null;
+}
+
+
+function timeAgo(date) {
+    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+    const intervals = [
+        { label: "year", seconds: 31536000 },
+        { label: "month", seconds: 2592000 },
+        { label: "day", seconds: 86400 },
+        { label: "hour", seconds: 3600 },
+        { label: "minute", seconds: 60 },
+        { label: "second", seconds: 1 }
+    ];
+    const lang = getCookie("lang") || "en";
+    
+    for (const interval of intervals) {
+        const count = Math.floor(seconds / interval.seconds);
+        if (count > 0) {
+            let label;
+            let ago = "ago";
+
+            if(lang === "ua") {
+                ago = "тому";
+
+                switch (interval.label) {
+                    case "year":
+                        if (count % 10 === 1 && count % 100 !== 11) label = "рік";
+                        else if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) label = "роки";
+                        else label = "років";
+                        break;
+
+                    case "month":
+                        if (count === 1) label = "місяць";
+                        else if (count >= 2 && count <= 4) label = "місяці";
+                        else label = "місяців";
+                        break;
+
+                    case "day":
+                        if (count === 1) label = "день";
+                        else if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) label = "дні";
+                        else label = "днів";
+                        break;
+
+                    case "hour":
+                        if (count % 10 === 1 && count % 100 !== 11) label = "годину";
+                        else if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) label = "години";
+                        else label = "годин";
+                        break;
+
+                    case "minute":
+                        if (count % 10 === 1 && count % 100 !== 11) label = "хвилину";
+                        else if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) label = "хвилини";
+                        else label = "хвилин";
+                        break;
+
+                    case "second":
+                        if (count % 10 === 1 && count % 100 !== 11) label = "секунду";
+                        else if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) label = "секунди";
+                        else label = "секунд";
+                        break;
+                }
+            } else {
+                label = `${interval.label}${count > 1 ? "s" : ""}`;
+            }
+
+            return `${count} ${label} ${ago}`;
+        }
+    }
+
+    return lang === "ua" ? "щойно" : 'now';
+}
+
 document.addEventListener("DOMContentLoaded", () => {
 
     try {
