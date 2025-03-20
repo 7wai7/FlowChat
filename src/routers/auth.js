@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import jwt from 'jsonwebtoken'
+import jwt from 'jsonwebtoken';
 import { User, isEnableEmail } from '../models/User.js';
 
 const router = new Router();

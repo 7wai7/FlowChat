@@ -19,7 +19,9 @@
     "settings": "Настройки",
     "language": "Мова",
     "logout": "Вийти",
+    "deleteChat": "Видалити чат",
     "leaveGroup": "Покинути групу",
+    "shareGroup": "Копіювати посилання групи",
     "delete": "Видалити",
     "writeMessage": "Написати повідомлення..."
 }

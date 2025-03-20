@@ -6,6 +6,10 @@ function getCookie(name) {
         ?.split('=')[1] || null;
 }
 
+function linkify(text) {
+    const urlPattern = /(http?:\/\/[^\s]+)/g;
+    return text.replace(urlPattern, '<a href="$1" rel="noopener noreferrer">$1</a>');
+}
 
 function timeAgo(date) {
     const seconds = Math.floor((new Date() - new Date(date)) / 1000);

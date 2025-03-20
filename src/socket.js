@@ -9,9 +9,10 @@ import ejs from 'ejs';
 import functions from './functions.js';
 import { User } from "./models/User.js";
 import Message from "./models/Message.js";
-import { createMessage, deleteMessage, findMessages, findMessagesByChatId } from "./service.js";
+import { createMessage, deleteMessage } from "./service.js";
 import { translate } from './localization.js';
 import { callbackify } from "util";
+import Chat from "./models/Chat.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -47,7 +48,11 @@ export function initSocket(server) {
     });
 
     io.on("connection", async (socket) => {
-        socket.emit('connected', socket.user._id);
+        try {
+            socket.emit('connected', socket.user._id);
+        } catch (err) {
+            console.error(err);
+        }
 
 
         function render(path_, params, callback) {
@@ -69,13 +74,7 @@ export function initSocket(server) {
                 socket.join(chatId);
                 console.log(`Користувач ${socket.id} приєднався до чату ${chatId}`);
                 
-                const cookies = socket.handshake.headers.cookie ? cookie.parse(socket.handshake.headers.cookie) : {};
-                const lang = cookies.lang || "en";
-
-                const messages = await findMessagesByChatId(chatId, 0, 20);
-                const translations = {}
-
-                callback({ messages, translations })
+                callback({ success: true })
             } catch (err) {
                 console.error(err);
                 callback({ message: err.message })
@@ -91,14 +90,14 @@ export function initSocket(server) {
             }
         });
 
-        socket.on("send-message", async ({ chatId, recipient, content }, callback) => {
+        socket.on("send-message", async (data, callback) => {
             try {
-                if (!recipient || !content) return callback({ error: "Recipient or content is not specified" });
-            
+                let { chatId, recipient, content, fileUrl } = data;
+
                 const cookies = socket.handshake.headers.cookie ? cookie.parse(socket.handshake.headers.cookie) : {};
                 const lang = cookies.lang || "en";
 
-                const message = await createMessage(chatId, socket.user._id, recipient, content);
+                const message = await createMessage(chatId, socket.user._id, recipient, content, fileUrl);
                 const fullMessage = await Message.findById(message._id).populate("sender");
 
                 const translations = {
@@ -111,27 +110,40 @@ export function initSocket(server) {
                     isUpdatedChatId = true;
                     socket.join(chatId);
                     
-                    socket.emit("new-message", { chatId, isUpdatedChatId, message: fullMessage, translations });
-                    socket.to(chatId).emit("new-message", { chatId, isUpdatedChatId, message: fullMessage, translations })
+                    const chat = await Chat.findById(chatId);
+                    socket.emit("new-message", { chat, isUpdatedChatId, message: fullMessage, translations });
+                    socket.to(chatId).emit("new-message", { chat, isUpdatedChatId, message: fullMessage, translations });
+                    callback({ success: true });
                     return;
                 }
 
-                io.to(chatId).emit("new-message", { chatId, isUpdatedChatId, message: fullMessage, translations })
+
+                const chat = await Chat.findById(chatId);
+                io.to(chatId).emit("new-message", { chat, isUpdatedChatId, message: fullMessage, translations })
+                callback({ success: true });
             } catch (err) {
                 console.error(err);
                 callback({ error: err.message });
             }
         });
 
-        socket.on("delete-message", async (req) => {
+        socket.on("delete-message", async ({ chatId, id }, callback) => {
             try {
-                const { chatId, id } = req;
+                const result = await deleteMessage(id, socket.user);
+                if(result.success) {
+                    const lastMessage = (
+                        await Message.find({ chat: result.deletedMessage.chat })
+                            .sort({ createdAt: -1 })
+                            .limit(1)
+                        )[0];
 
-                await deleteMessage(id);
+                    return io.to(chatId).emit("delete-message", { id, lastMessage });
+                }
                 
-                io.to(chatId).emit("delete-message", id);
+                callback(result);
             } catch (err) {
                 console.log(err);
+                callback({ error: err.message });
             }
         })
 

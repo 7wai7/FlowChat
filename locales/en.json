@@ -19,7 +19,9 @@
     "settings": "Settings",
     "language": "Language",
     "logout": "Log out",
+    "deleteChat": "Delete the chat",
     "leaveGroup": "Leave the group",
+    "shareGroup": "Copy the group link",
     "delete": "Delete",
     "writeMessage": "Write message..."
 }

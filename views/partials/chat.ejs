@@ -1,19 +1,18 @@
-<% chats.forEach(chat => { 
-    let id = chat.chat?._id || chat._id;
+<% chats.forEach(chat => {
+    let id = chat.chat ? chat.chat._id : chat.type ? chat._id : -1;
+    let type = chat.chat?.type || chat.type;
     let userId = chat.user2?._id || chat._id;
-    let title = chat.chat ? chat.login : chat.user2?.login || chat.name || chat.login;
+    let title = chat.chat ? chat.login : chat.name || chat.user2?.login || chat.login;
     let avatarId = chat.type === 'group' ? chat._id : userId;
 %>
-    <button class="chat" data-id="<%= id %>" data-userid="<%= chat.type !== 'group' ? userId : '' %>" data-title="<%= title %>">
-        <img src="api/avatar/<%= avatarId %>" width="40px" class="avatar">
+    <button class="chat" data-id="<%= id %>" data-type="<%= type %>" data-userid="<%= chat.type !== 'group' ? userId : '' %>" data-title="<%= title %>">
+        <img src="api/avatar/<%= avatarId %>" class="avatar">
         <div class="metadata">
             <div class="top">
                 <h3 class="title"><%= title %></h3>
                 <span class="date" data-date="<%= chat.lastMessage?.createdAt %>"></span>
             </div>
-            <div class="bottom">
-                <span class="last-message"><%= chat.lastMessage?.content %></span>
-            </div>
+            <span class="last-message"><%= chat.lastMessage ? (chat.lastMessage.fileUrl ? "file" : chat.lastMessage.content) : '' %></span>
         </div>
     </button>
 <% }); %>

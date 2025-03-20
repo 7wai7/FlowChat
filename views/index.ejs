@@ -11,7 +11,7 @@
                    stroke="#fff" />
              </svg>
             </button>
-            <nav class="content">
+            <nav class="content" hidden>
                 <div class="top">
                     <button id="upload-avatar-btn">
                         <img src="api/avatar/<%= user._id %>" width="100%" class="avatar">
@@ -104,7 +104,7 @@
             </svg>
             </button>
             <h2 id="chat-title"></h2>
-            <div class="dropdown chat-options">
+            <div id="chat-options" class="dropdown chat-options">
                 <button>
                     <svg width="18px" height="18px" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                         <path
@@ -113,8 +113,31 @@
                     </svg>
                 </button>
                 <nav class="content" hidden>
-                    <button>
-                        <svg fill="#000000" width="24px" height="24px" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                    <button id="delete-chat-btn">
+                        <svg width="20px" height="20px" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                            <style type="text/css">
+                                .st0{fill:none;stroke:#152730;stroke-width:2;stroke-miterlimit:10;}
+                            </style>
+                            <rect class="st0" height="22" id="XMLID_14_" width="16" x="8" y="7"/>
+                            <line class="st0" id="XMLID_4_" x1="16" x2="16" y1="10" y2="26"/>
+                            <line class="st0" id="XMLID_118_" x1="20" x2="20" y1="10" y2="26"/>
+                            <line class="st0" id="XMLID_3_" x1="12" x2="12" y1="10" y2="26"/>
+                            <line class="st0" id="XMLID_5_" x1="5" x2="27" y1="7" y2="7"/>
+                            <rect class="st0" height="4" id="XMLID_6_" width="6" x="13" y="3"/>
+                            <g id="XMLID_386_"/>
+                        </svg>
+                        <div><%= t('deleteChat') %></div>
+                    </button>
+                    <button id="share-group-btn">
+                        <svg height="20px" width="20px" viewBox="-120 -100 21 21" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M -99,-90.094304 -108.77636,-100 v 6.489402 c -2.92893,0.155594 -5.66077,1.385427 -7.75023,3.502528 -2.23987,2.269453 -3.47341,5.286872 -3.47341,8.496456 V -79 l 1.19228,-2.201963 c 1.86023,-3.435661 5.42116,-5.569926 9.29304,-5.569926 0.24552,0 0.49235,0.0088 0.73832,0.02627 v 6.557017 z m -10.51468,2.034941 c -3.46759,0 -6.71266,1.529011 -8.93891,4.109486 1.09241,-4.744995 5.30152,-8.290161 10.31252,-8.290161 h 0.63529 v -4.651905 l 6.70884,6.797598 -6.70884,6.797597 v -4.601992 l -0.5572,-0.06994 c -0.47943,-0.06013 -0.96784,-0.09068 -1.4517,-0.09068 z"
+                                style="stroke-width:0.041286" />
+                        </svg>
+                        <div><%= t('shareGroup') %></div>
+                    </button>
+                    <button id="leave-group-btn">
+                        <svg fill="#000000" width="20px" height="20px" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                             <path
                                 d="M3.651 16.989h17.326c0.553 0 1-0.448 1-1s-0.447-1-1-1h-17.264l3.617-3.617c0.391-0.39 0.391-1.024 0-1.414s-1.024-0.39-1.414 0l-5.907 6.062 5.907 6.063c0.196 0.195 0.451 0.293 0.707 0.293s0.511-0.098 0.707-0.293c0.391-0.39 0.391-1.023 0-1.414zM29.989 0h-17c-1.105 0-2 0.895-2 2v9h2.013v-7.78c0-0.668 0.542-1.21 1.21-1.21h14.523c0.669 0 1.21 0.542 1.21 1.21l0.032 25.572c0 0.668-0.541 1.21-1.21 1.21h-14.553c-0.668 0-1.21-0.542-1.21-1.21v-7.824l-2.013 0.003v9.030c0 1.105 0.895 2 2 2h16.999c1.105 0 2.001-0.895 2.001-2v-28c-0-1.105-0.896-2-2-2z"></path>
                         </svg>
@@ -134,6 +157,12 @@
                     </g>
                 </svg>
             </button>
+        </div>
+        <div id="attach-file-uploading-modal" hidden>
+            <div class="modal-panel">
+                <h2 class="uploading"><%= t('uploading') %></h2>
+                <progress id="upload-progress-bar" max="100" value="0"></progress>
+            </div>
         </div>
         <div id="attach-file-panel" class="attach-file-panel" hidden>
             <div class="uploaded-data">

@@ -1,8 +1,8 @@
 #navigation-chats {
-    width: 400px;
     display: flex;
     flex-flow: column;
     background: #0a0039;
+    width: 340px;
 }
 
 .nav-chats-top {
@@ -80,43 +80,43 @@
     background-color: #555;
 }
 
+
 #chats-container {
     display: flex;
     flex-flow: column;
 }
 
-#chats-container button {
+#chats-container .chat {
     color: white;
     padding: 10px;
     display: inline-flex;
     align-items: center;
 }
 
-#chats-container button:hover {
+#chats-container .chat:hover {
     background: #030029;
 }
 
 #chats-container .avatar {
     margin-right: 10px;
+    width: 40px;
+    min-width: 40px;
 }
 
-#chats-container .metadata {
-    width: 100%;
-}
-
-#chats-container button .top {
+#chats-container .chat .top {
     margin-bottom: 10px;
     display: inline-flex;
+    gap: 20px;
     width: 100%;
 }
 
-#chats-container button .bottom {
-    width: 100%;
+#chats-container .last-message {
     text-align: left;
 }
 
 #chats-container .title,
-#chats-container button .last-message {
+#chats-container .last-message {
+    overflow-wrap: anywhere;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
@@ -129,6 +129,10 @@
     font-size: medium;
     font-weight: 400;
     text-align: left;
+}
+
+#chats-container .metadata {
+    flex: 1;
 }
 
 #chats-container .metadata .date {
@@ -159,6 +163,7 @@ main {
     height: 100%;
     display: flex;
     flex-flow: column;
+    position: relative;
 }
 
 .chat-header {
@@ -230,6 +235,26 @@ main {
     transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
+#attach-file-uploading-modal {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    background: #0000002b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#attach-file-uploading-modal .modal-panel {
+    color: #fff;
+    background: #0e0051;
+    padding: 10px 20px;
+    display: flex;
+    flex-flow: column;
+    gap: 20px;
+    align-items: center;
+}
+
 .message {
     color: #fff;
     display: inline-flex;
@@ -251,6 +276,11 @@ main {
     min-width: 30px;
 }
 
+.message .uploaded-file {
+    width: 100%;
+    max-width: 400px;
+}
+
 .message-content {
     display: inline-flex;
     background: #0a0039;
@@ -261,6 +291,10 @@ main {
 .message-content .col1 {
     display: flex;
     flex-direction: column;
+}
+
+.message-text {
+    overflow-wrap: anywhere;
 }
 
 .chat .date,
@@ -275,8 +309,10 @@ main {
 
 .message-content .col2 {
     display: flex;
+    flex-flow: column;
     flex-wrap: wrap;
     justify-content: space-between;
+    margin-left: 10px;
 }
 
 .message-options {
