@@ -6,7 +6,6 @@ import Message from "./models/Message.js";
 import { User } from "./models/User.js";
 import Chat from "./models/Chat.js";
 import ChatParticipant from "./models/ChatParticipant.js";
-import { matchesGlob } from "path";
 
 
 export const findChats = async (userId) => {
